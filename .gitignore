@@ -1,0 +1,36 @@
+# ── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# ── Secrets / credentials — NEVER commit ─────────────────────────────────────
+# This kit connects to Snowflake via the `snow` CLI, which reads credentials
+# from ~/.snowflake/connections.toml on the user's machine — NOT from this repo.
+# The patterns below are a safety net so keys/connection files can never be
+# committed by accident. (If you ever need to commit a *safe* .toml such as a
+# pyproject.toml, force-add it: `git add -f pyproject.toml`.)
+*.toml
+connection.toml
+connections.toml
+**/connections.toml
+*.p8
+*.pem
+*.key
+*.env
+.env*
+*credentials*
+*secret*
+
+# ── Build / temp ─────────────────────────────────────────────────────────────
+*.tmp
+*.log
+output/
+dist/
+build/

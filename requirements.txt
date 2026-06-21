@@ -1,0 +1,5 @@
+# Local tooling for the kit (the seed generator + validators).
+# NOTE: pandas/altair are NOT needed locally — they run inside Snowflake's
+# Streamlit runtime. The generator uses only the stdlib csv module + Faker.
+faker>=20
+jsonschema>=4    # optional: validate_spec.py falls back to structural checks without it
