@@ -26,6 +26,7 @@ GEN_REQUIRED = {
     "const": ["value"],
     "fk": ["ref_table"],
     "choice": ["choices"],
+    "enumerate": ["choices"],
     "int": ["min", "max"],
     "float": ["min", "max"],
     "date": ["min", "max"],

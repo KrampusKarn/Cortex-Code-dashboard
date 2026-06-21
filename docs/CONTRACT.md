@@ -107,6 +107,7 @@ fields: `pk`, `nullable`, `api_field`, `comment`, `null_pct` (probability of NUL
 | `const` | a fixed value | `value` |
 | `fk` | a foreign-key value | `ref_table`, `ref_column` (default = ref table's pk), `fk_strategy` (`random`\|`sequential`\|`parent`) |
 | `choice` | a value picked from a list | `choices`, optional `weights` |
+| `enumerate` | ordered, distinct values for a small dimension table (row N → `choices[N]`) | `choices` (set `row_count` == `len(choices)`) |
 | `int` | random integer in range | `min`, `max` |
 | `float` | random float in range | `min`, `max`, optional `round` |
 | `bool` | TRUE/FALSE | `p_true` (default 0.5) |

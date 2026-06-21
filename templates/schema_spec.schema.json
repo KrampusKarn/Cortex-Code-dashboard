@@ -141,7 +141,7 @@
           "type": "string",
           "description": "Generator strategy. See docs/CONTRACT.md for the full vocabulary and which params each accepts.",
           "enum": [
-            "row_index", "const", "fk", "choice", "int", "float", "bool",
+            "row_index", "const", "fk", "choice", "enumerate", "int", "float", "bool",
             "date", "datetime", "sequence_date", "template", "faker"
           ]
         },

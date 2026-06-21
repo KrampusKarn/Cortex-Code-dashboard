@@ -96,6 +96,11 @@ def gen_value(col: dict, ctx: dict):
         choices = col["choices"]
         weights = col.get("weights")
         return random.choices(choices, weights=weights, k=1)[0]
+    if g == "enumerate":
+        # deterministic, ordered assignment — for small dimension tables whose rows
+        # must take specific distinct values (set row_count == len(choices)).
+        choices = col["choices"]
+        return choices[idx % len(choices)]
     if g == "int":
         return random.randint(int(col["min"]), int(col["max"]))
     if g == "float":
@@ -159,6 +164,26 @@ def gen_row(table: dict, ctx: dict) -> dict:
             continue
         row[col["name"]] = gen_value(col, ctx)
     return row
+
+
+def load_kb_rows(table: dict, kb_path: Path) -> list[dict]:
+    """The knowledge-base table is seeded from curated content (its source_json),
+    NOT Faker — this is the text the Cortex RAG actually retrieves. JSON keys map
+    to columns by name; a `row_index` column becomes the 1-based id."""
+    data = json.loads(kb_path.read_text())
+    rows = []
+    for i, obj in enumerate(data):
+        row = {}
+        for c in table["columns"]:
+            name = c["name"]
+            if name in obj:
+                row[name] = obj[name]
+            elif c["gen"] == "row_index":
+                row[name] = i + 1
+            else:
+                row[name] = None
+        rows.append(row)
+    return rows
 
 
 def gen_table(table: dict, generated: dict, specs_by_table: dict, today: date, counter: dict) -> list[dict]:
@@ -247,12 +272,19 @@ def main() -> None:
     generated: dict[str, list[dict]] = {}
     counter = {"n": 0}
 
+    kb = spec.get("knowledge_base", {})
+    kb_name = kb.get("table")
+    kb_path = Path(args.spec).parent / kb["source_json"] if kb.get("source_json") else None
+
     for table in order_tables(spec["tables"]):
         if table.get("is_chat_table"):
             generated[table["name"]] = []          # DDL only; app writes rows at runtime
             continue
-        counter["n"] = 0                            # pk row_index restarts per table
-        rows = gen_table(table, generated, specs_by_table, today, counter)
+        if table["name"] == kb_name and kb_path:    # seed KB from curated content, not Faker
+            rows = load_kb_rows(table, kb_path)
+        else:
+            counter["n"] = 0                        # pk row_index restarts per table
+            rows = gen_table(table, generated, specs_by_table, today, counter)
         generated[table["name"]] = rows
         write_csv(out_dir, table, rows)
         print(f"  {table['name']:32} {len(rows):>6} rows")

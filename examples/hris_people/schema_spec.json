@@ -1,0 +1,214 @@
+{
+  "spec_version": "1.0",
+  "source": {
+    "name": "Freshteam + Harvest + Lattice",
+    "docs_url": "https://developers.freshteam.com/api/",
+    "auth": "bearer"
+  },
+  "app": {
+    "database": "DEMO_EMPLOYEE_APP",
+    "schema": "PUBLIC",
+    "warehouse": "DEMO_WH",
+    "role": "SYSADMIN",
+    "stage": "DEMO_SEED_STAGE",
+    "company_name": "Acme Solutions Inc",
+    "llm_model": "mistral-large2",
+    "embed_model": "snowflake-arctic-embed-m-v1.5"
+  },
+  "tables": [
+    {
+      "name": "BUSINESS_UNITS", "grain": "one row per top-level business unit",
+      "endpoint": "GET /api/v1/business_units", "row_count": 3,
+      "columns": [
+        { "name": "BU_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "NAME", "type": "VARCHAR(80)", "gen": "enumerate", "choices": ["Technology", "Operations", "Go-to-Market"], "api_field": "name" },
+        { "name": "HEAD_USER_ID", "type": "NUMBER", "gen": "int", "min": 1, "max": 10 }
+      ]
+    },
+    {
+      "name": "DEPARTMENTS_DETAIL", "grain": "one row per department",
+      "endpoint": "GET /api/v1/departments", "row_count": 5,
+      "columns": [
+        { "name": "DEPT_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "DEPT_NAME", "type": "VARCHAR(100)", "gen": "enumerate", "choices": ["Engineering", "Data & Analytics", "Delivery", "People & HR", "Sales"], "api_field": "name" },
+        { "name": "BU_ID", "type": "NUMBER", "gen": "fk", "ref_table": "BUSINESS_UNITS" },
+        { "name": "HEAD_USER_ID", "type": "NUMBER", "gen": "int", "min": 1, "max": 10 }
+      ]
+    },
+    {
+      "name": "EMPLOYEES", "grain": "one row per employee",
+      "endpoint": "GET /api/v1/employees", "row_count": 50,
+      "columns": [
+        { "name": "EMPLOYEE_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "FIRST_NAME", "type": "VARCHAR(80)", "gen": "faker", "faker_provider": "first_name", "api_field": "first_name" },
+        { "name": "LAST_NAME", "type": "VARCHAR(80)", "gen": "faker", "faker_provider": "last_name", "api_field": "last_name" },
+        { "name": "EMAIL", "type": "VARCHAR(150)", "gen": "template", "template": "{FIRST_NAME|lower}.{LAST_NAME|lower}@acmesolutions.com", "api_field": "official_email" },
+        { "name": "DEPARTMENT", "type": "VARCHAR(100)", "gen": "choice", "choices": ["Engineering", "Data & Analytics", "Delivery", "People & HR", "Sales"], "weights": [0.36, 0.16, 0.28, 0.08, 0.12], "api_field": "department.name" },
+        { "name": "TITLE", "type": "VARCHAR(150)", "gen": "choice", "choices": ["Software Engineer", "Senior Software Engineer", "Staff Engineer", "Engineering Manager", "Data Analyst", "Senior Data Analyst", "Delivery Lead", "Consultant", "Senior Consultant", "HR Business Partner", "Account Executive", "Sales Manager"], "api_field": "designation" },
+        { "name": "LOCATION", "type": "VARCHAR(100)", "gen": "choice", "choices": ["Singapore", "Bangkok", "Ho Chi Minh City", "Jakarta", "Manila"], "weights": [0.3, 0.25, 0.2, 0.15, 0.1], "api_field": "branch_name" },
+        { "name": "STATUS", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Active", "Terminated"], "weights": [0.88, 0.12], "api_field": "status" },
+        { "name": "HIRE_DATE", "type": "DATE", "gen": "date", "min": "-5y", "max": "-1m", "api_field": "date_of_joining" },
+        { "name": "TERMINATION_DATE", "type": "DATE", "gen": "date", "min": "-12m", "max": "today", "null_pct": 0.88, "api_field": "termination_date" },
+        { "name": "MANAGER_ID", "type": "NUMBER", "gen": "int", "min": 1, "max": 10, "api_field": "reporting_to_id" },
+        { "name": "BUSINESS_UNIT_ID", "type": "NUMBER", "gen": "fk", "ref_table": "BUSINESS_UNITS" },
+        { "name": "LATTICE_ID", "type": "VARCHAR(64)", "gen": "template", "template": "lat_{EMPLOYEE_ID}" },
+        { "name": "FRESHTEAM_ID", "type": "VARCHAR(64)", "gen": "template", "template": "ft_{EMPLOYEE_ID}" }
+      ]
+    },
+    {
+      "name": "EMPLOYEE_FIELDS", "grain": "one row per employee (extended HR fields)",
+      "endpoint": "GET /api/v1/employees (extended)", "row_count": 50,
+      "columns": [
+        { "name": "EMPLOYEE_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "EMPLOYMENT_TYPE", "type": "VARCHAR(40)", "gen": "choice", "choices": ["Full-time", "Contractor", "Managed Workforce"], "weights": [0.78, 0.16, 0.06], "api_field": "employment_type" },
+        { "name": "PHONE", "type": "VARCHAR(40)", "gen": "faker", "faker_provider": "phone_number" },
+        { "name": "NATIONALITY", "type": "VARCHAR(60)", "gen": "choice", "choices": ["Singaporean", "Thai", "Vietnamese", "Indonesian", "Filipino", "Indian", "Malaysian"] },
+        { "name": "GENDER", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Female", "Male", "Non-binary"], "weights": [0.46, 0.5, 0.04] },
+        { "name": "DATE_OF_BIRTH", "type": "DATE", "gen": "date", "min": "-55y", "max": "-23y" },
+        { "name": "NOTICE_PERIOD_DAYS", "type": "NUMBER", "gen": "choice", "choices": [30, 60, 90], "weights": [0.5, 0.35, 0.15] }
+      ]
+    },
+    {
+      "name": "HEADCOUNT_PLAN", "grain": "one row per month (planned workforce)",
+      "endpoint": "internal FP&A plan", "row_count": 18,
+      "columns": [
+        { "name": "PLAN_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "MONTH", "type": "DATE", "gen": "sequence_date", "step": "month", "anchor": "-12m" },
+        { "name": "DEPARTMENT", "type": "VARCHAR(50)", "gen": "const", "value": "All" },
+        { "name": "PLANNED_FTE", "type": "NUMBER", "gen": "int", "min": 36, "max": 44 },
+        { "name": "PLANNED_CONTRACTORS", "type": "NUMBER", "gen": "int", "min": 6, "max": 11 },
+        { "name": "PLANNED_MANAGED", "type": "NUMBER", "gen": "int", "min": 2, "max": 5 }
+      ]
+    },
+    {
+      "name": "TASKS", "grain": "one row per task type",
+      "endpoint": "GET /v2/tasks", "row_count": 8,
+      "columns": [
+        { "name": "TASK_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "TASK_NAME", "type": "VARCHAR(80)", "gen": "enumerate", "choices": ["Development", "Design", "PM", "QA", "Training", "Meeting", "Documentation", "Discovery"], "api_field": "name" },
+        { "name": "IS_BILLABLE_DEFAULT", "type": "BOOLEAN", "gen": "bool", "p_true": 0.6 }
+      ]
+    },
+    {
+      "name": "PROJECTS", "grain": "one row per client project",
+      "endpoint": "GET /v2/projects", "row_count": 10,
+      "columns": [
+        { "name": "PROJECT_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "PROJECT_NAME", "type": "VARCHAR(150)", "gen": "faker", "faker_provider": "catch_phrase", "api_field": "name" },
+        { "name": "CLIENT", "type": "VARCHAR(150)", "gen": "faker", "faker_provider": "company", "api_field": "client.name" },
+        { "name": "STATUS", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Active", "Completed", "On Hold"], "weights": [0.6, 0.3, 0.1] },
+        { "name": "START_DATE", "type": "DATE", "gen": "date", "min": "-18m", "max": "-1m" },
+        { "name": "END_DATE", "type": "DATE", "gen": "date", "min": "today", "max": "+12m" },
+        { "name": "HOURLY_RATE", "type": "NUMBER", "gen": "int", "min": 90, "max": 160 },
+        { "name": "IS_BILLABLE", "type": "BOOLEAN", "gen": "bool", "p_true": 0.85 }
+      ]
+    },
+    {
+      "name": "PROJECT_ASSIGNMENTS", "grain": "one row per employee-project allocation",
+      "endpoint": "GET /v2/user_assignments", "row_count": 80,
+      "columns": [
+        { "name": "ASSIGNMENT_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "EMPLOYEE_ID", "type": "NUMBER", "gen": "fk", "ref_table": "EMPLOYEES" },
+        { "name": "PROJECT_ID", "type": "NUMBER", "gen": "fk", "ref_table": "PROJECTS" },
+        { "name": "ROLE", "type": "VARCHAR(80)", "gen": "choice", "choices": ["Engineer", "Lead", "Consultant", "Analyst", "PM"] },
+        { "name": "ALLOCATION_PCT", "type": "NUMBER", "gen": "choice", "choices": [25, 50, 75, 100], "weights": [0.2, 0.3, 0.2, 0.3] },
+        { "name": "IS_PROJECT_MANAGER", "type": "BOOLEAN", "gen": "bool", "p_true": 0.15 }
+      ]
+    },
+    {
+      "name": "TIME_ENTRIES", "grain": "one row per logged time entry",
+      "endpoint": "GET /v2/time_entries", "row_count": 2200,
+      "columns": [
+        { "name": "ENTRY_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "EMPLOYEE_ID", "type": "NUMBER", "gen": "fk", "ref_table": "EMPLOYEES", "api_field": "user.id" },
+        { "name": "PROJECT_ID", "type": "NUMBER", "gen": "fk", "ref_table": "PROJECTS", "api_field": "project.id" },
+        { "name": "TASK_ID", "type": "NUMBER", "gen": "fk", "ref_table": "TASKS", "api_field": "task.id" },
+        { "name": "SPENT_DATE", "type": "DATE", "gen": "date", "min": "-12m", "max": "today", "api_field": "spent_date" },
+        { "name": "HOURS", "type": "FLOAT", "gen": "float", "min": 1.0, "max": 8.0, "round": 1, "api_field": "hours" },
+        { "name": "IS_BILLABLE", "type": "BOOLEAN", "gen": "bool", "p_true": 0.78, "api_field": "billable" },
+        { "name": "NOTES", "type": "VARCHAR", "gen": "faker", "faker_provider": "sentence", "api_field": "notes" }
+      ]
+    },
+    {
+      "name": "PERFORMANCE_REVIEWS", "grain": "one row per review",
+      "endpoint": "GET /v1/feedback (Lattice)", "row_count": 120,
+      "columns": [
+        { "name": "REVIEW_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "EMPLOYEE_ID", "type": "NUMBER", "gen": "fk", "ref_table": "EMPLOYEES", "api_field": "reviewee_id" },
+        { "name": "REVIEW_DATE", "type": "DATE", "gen": "date", "min": "-18m", "max": "today", "api_field": "created_at" },
+        { "name": "REVIEW_PERIOD", "type": "VARCHAR(20)", "gen": "choice", "choices": ["H1 2025", "H2 2025", "H1 2026"] },
+        { "name": "RATING", "type": "FLOAT", "gen": "choice", "choices": [2.5, 3.0, 3.5, 4.0, 4.5, 5.0], "weights": [0.05, 0.15, 0.3, 0.3, 0.15, 0.05] },
+        { "name": "SENTIMENT", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Positive", "Neutral", "Negative"], "weights": [0.5, 0.38, 0.12] },
+        { "name": "SENTIMENT_SCORE", "type": "FLOAT", "gen": "float", "min": -0.6, "max": 0.9, "round": 2, "comment": "in production: SNOWFLAKE.CORTEX.SENTIMENT(written_feedback)" },
+        { "name": "GOALS_MET", "type": "NUMBER", "gen": "int", "min": 2, "max": 8 },
+        { "name": "GOALS_TOTAL", "type": "NUMBER", "gen": "int", "min": 6, "max": 8 },
+        { "name": "MANAGER_COMMENTS", "type": "VARCHAR", "gen": "faker", "faker_provider": "paragraph", "api_field": "written_feedback" }
+      ]
+    },
+    {
+      "name": "LEAVE_REQUESTS", "grain": "one row per leave request",
+      "endpoint": "GET /api/v1/time_offs", "row_count": 150,
+      "columns": [
+        { "name": "LEAVE_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "EMPLOYEE_ID", "type": "NUMBER", "gen": "fk", "ref_table": "EMPLOYEES" },
+        { "name": "LEAVE_TYPE", "type": "VARCHAR(30)", "gen": "choice", "choices": ["Annual", "Sick", "Personal", "Unpaid"], "weights": [0.5, 0.28, 0.15, 0.07] },
+        { "name": "START_DATE", "type": "DATE", "gen": "date", "min": "-10m", "max": "+2m" },
+        { "name": "DAYS", "type": "NUMBER", "gen": "int", "min": 1, "max": 10 },
+        { "name": "STATUS", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Approved", "Pending", "Rejected"], "weights": [0.75, 0.18, 0.07] },
+        { "name": "REASON", "type": "VARCHAR", "gen": "faker", "faker_provider": "sentence" }
+      ]
+    },
+    {
+      "name": "COMPANY_KNOWLEDGE_BASE", "grain": "one row per knowledge-base document",
+      "endpoint": "internal wiki export", "row_count": 24,
+      "columns": [
+        { "name": "DOC_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "TITLE", "type": "VARCHAR(200)", "gen": "const", "value": "" },
+        { "name": "CATEGORY", "type": "VARCHAR(80)", "gen": "const", "value": "" },
+        { "name": "AUDIENCE", "type": "VARCHAR(40)", "gen": "const", "value": "" },
+        { "name": "CONTENT", "type": "VARCHAR", "gen": "const", "value": "" }
+      ]
+    },
+    {
+      "name": "CHAT_SESSIONS", "grain": "one row per chat conversation (written by the app)",
+      "is_chat_table": true,
+      "columns": [
+        { "name": "SESSION_ID", "type": "NUMBER", "pk": true, "autoincrement": true, "gen": "row_index" },
+        { "name": "USERNAME", "type": "VARCHAR(150)", "gen": "const", "value": "" },
+        { "name": "SESSION_NAME", "type": "VARCHAR(200)", "gen": "const", "value": "" },
+        { "name": "CREATED_AT", "type": "TIMESTAMP_NTZ", "default": "CURRENT_TIMESTAMP()", "gen": "const", "value": "" },
+        { "name": "LAST_ACTIVE", "type": "TIMESTAMP_NTZ", "default": "CURRENT_TIMESTAMP()", "gen": "const", "value": "" }
+      ]
+    },
+    {
+      "name": "CHAT_MESSAGES", "grain": "one row per chat message (written by the app)",
+      "is_chat_table": true,
+      "columns": [
+        { "name": "MESSAGE_ID", "type": "NUMBER", "pk": true, "autoincrement": true, "gen": "row_index" },
+        { "name": "SESSION_ID", "type": "NUMBER", "gen": "const", "value": "" },
+        { "name": "USERNAME", "type": "VARCHAR(150)", "gen": "const", "value": "" },
+        { "name": "ROLE", "type": "VARCHAR(20)", "gen": "const", "value": "" },
+        { "name": "CONTENT", "type": "VARCHAR", "gen": "const", "value": "" },
+        { "name": "SOURCES", "type": "VARCHAR", "gen": "const", "value": "" },
+        { "name": "CREATED_AT", "type": "TIMESTAMP_NTZ", "default": "CURRENT_TIMESTAMP()", "gen": "const", "value": "" }
+      ]
+    }
+  ],
+  "knowledge_base": {
+    "table": "COMPANY_KNOWLEDGE_BASE",
+    "content_col": "CONTENT",
+    "attributes": ["CATEGORY", "TITLE", "AUDIENCE"],
+    "service_name": "COMPANY_KB_SEARCH",
+    "target_lag": "1 hour",
+    "source_json": "kb_content.json"
+  },
+  "dashboard": {
+    "title": "Employee 360",
+    "icon": "👥",
+    "assistant_intro": "Ask me about company info, benefits, and events.",
+    "chat_placeholder": "Ask about company info, benefits, events...",
+    "suggested_prompts": ["What health plans do we offer?", "What is the PTO policy?", "When is the next all-hands?"],
+    "search_columns": ["CONTENT", "TITLE", "CATEGORY"],
+    "search_limit": 3
+  }
+}

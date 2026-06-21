@@ -1,0 +1,164 @@
+{
+  "spec_version": "1.0",
+  "source": {
+    "name": "Microsoft Dynamics 365 Business Central",
+    "base_url": "https://api.businesscentral.dynamics.com/v2.0/<tenant>/api/v2.0",
+    "docs_url": "https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/",
+    "auth": "oauth2"
+  },
+  "app": {
+    "database": "DEMO_DYNAMICS_APP",
+    "schema": "PUBLIC",
+    "warehouse": "DEMO_WH",
+    "role": "SYSADMIN",
+    "stage": "DEMO_SEED_STAGE",
+    "company_name": "Northwind Manufacturing",
+    "llm_model": "mistral-large2",
+    "embed_model": "snowflake-arctic-embed-m-v1.5"
+  },
+  "tables": [
+    {
+      "name": "CUSTOMERS", "grain": "one row per customer account",
+      "endpoint": "GET /customers", "row_count": 30,
+      "columns": [
+        { "name": "CUSTOMER_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "CUSTOMER_NUMBER", "type": "VARCHAR(20)", "gen": "template", "template": "C{CUSTOMER_ID}", "api_field": "number" },
+        { "name": "DISPLAY_NAME", "type": "VARCHAR(150)", "gen": "faker", "faker_provider": "company", "api_field": "displayName" },
+        { "name": "ADDRESS_COUNTRY", "type": "VARCHAR(60)", "gen": "choice", "choices": ["Singapore", "Thailand", "Vietnam", "Indonesia", "Philippines", "Malaysia"], "api_field": "addressLine1" },
+        { "name": "CUSTOMER_TYPE", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Company", "Person"], "weights": [0.85, 0.15], "api_field": "type" },
+        { "name": "CREDIT_LIMIT", "type": "NUMBER", "gen": "choice", "choices": [50000, 100000, 250000, 500000], "weights": [0.3, 0.35, 0.25, 0.1], "api_field": "creditLimit" },
+        { "name": "BALANCE_DUE", "type": "FLOAT", "gen": "float", "min": 0, "max": 60000, "round": 2, "api_field": "balanceDue" }
+      ]
+    },
+    {
+      "name": "PRODUCTS", "grain": "one row per item",
+      "endpoint": "GET /items", "row_count": 20,
+      "columns": [
+        { "name": "PRODUCT_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "ITEM_NUMBER", "type": "VARCHAR(20)", "gen": "template", "template": "ITM-{PRODUCT_ID}", "api_field": "number" },
+        { "name": "DISPLAY_NAME", "type": "VARCHAR(120)", "gen": "enumerate", "choices": ["Industrial Sensor Kit", "Hydraulic Pump", "Control Module", "Steel Bracket Set", "Conveyor Belt", "Servo Motor", "PLC Controller", "Pressure Valve", "Bearing Assembly", "Gear Box", "Power Supply Unit", "Cooling Fan Array", "Cable Harness", "Touchscreen Panel", "Safety Relay", "Linear Actuator", "Filtration Cartridge", "Welding Electrode Pack", "Lubricant Drum", "Calibration Tool"], "api_field": "displayName" },
+        { "name": "CATEGORY", "type": "VARCHAR(40)", "gen": "choice", "choices": ["Hardware", "Component", "Consumable", "Tool"], "api_field": "itemCategoryCode" },
+        { "name": "UNIT_PRICE", "type": "FLOAT", "gen": "float", "min": 25, "max": 2500, "round": 2, "api_field": "unitPrice" },
+        { "name": "UNIT_COST", "type": "FLOAT", "gen": "float", "min": 10, "max": 1800, "round": 2, "api_field": "unitCost" },
+        { "name": "INVENTORY", "type": "NUMBER", "gen": "int", "min": 0, "max": 600, "api_field": "inventory" }
+      ]
+    },
+    {
+      "name": "VENDORS", "grain": "one row per vendor",
+      "endpoint": "GET /vendors", "row_count": 12,
+      "columns": [
+        { "name": "VENDOR_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "VENDOR_NUMBER", "type": "VARCHAR(20)", "gen": "template", "template": "V{VENDOR_ID}", "api_field": "number" },
+        { "name": "DISPLAY_NAME", "type": "VARCHAR(150)", "gen": "faker", "faker_provider": "company", "api_field": "displayName" },
+        { "name": "COUNTRY", "type": "VARCHAR(60)", "gen": "choice", "choices": ["Singapore", "Thailand", "Vietnam", "China", "Japan", "Germany"] },
+        { "name": "BALANCE", "type": "FLOAT", "gen": "float", "min": 0, "max": 120000, "round": 2, "api_field": "balance" }
+      ]
+    },
+    {
+      "name": "SALES_ORDERS", "grain": "one row per sales order header",
+      "endpoint": "GET /salesOrders", "row_count": 70,
+      "columns": [
+        { "name": "ORDER_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "ORDER_NUMBER", "type": "VARCHAR(20)", "gen": "template", "template": "SO-{ORDER_ID}", "api_field": "number" },
+        { "name": "ORDER_DATE", "type": "DATE", "gen": "date", "min": "-12m", "max": "today", "api_field": "orderDate" },
+        { "name": "CUSTOMER_ID", "type": "NUMBER", "gen": "fk", "ref_table": "CUSTOMERS", "api_field": "customerId" },
+        { "name": "STATUS", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Open", "Released", "Invoiced", "Cancelled"], "weights": [0.2, 0.25, 0.45, 0.1], "api_field": "status" },
+        { "name": "CURRENCY_CODE", "type": "VARCHAR(10)", "gen": "choice", "choices": ["SGD", "THB", "USD", "VND"], "api_field": "currencyCode" },
+        { "name": "TOTAL_EXCL_TAX", "type": "FLOAT", "gen": "float", "min": 1000, "max": 90000, "round": 2, "api_field": "totalAmountExcludingTax" },
+        { "name": "TOTAL_INCL_TAX", "type": "FLOAT", "gen": "float", "min": 1070, "max": 96300, "round": 2, "api_field": "totalAmountIncludingTax" }
+      ]
+    },
+    {
+      "name": "SALES_ORDER_LINES", "grain": "one row per sales order line (child of SALES_ORDERS)",
+      "endpoint": "GET /salesOrders({id})/salesOrderLines",
+      "per_parent": { "parent": "SALES_ORDERS", "min": 1, "max": 5 },
+      "columns": [
+        { "name": "LINE_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "ORDER_ID", "type": "NUMBER", "gen": "fk", "fk_strategy": "parent", "ref_table": "SALES_ORDERS", "api_field": "documentId" },
+        { "name": "LINE_TYPE", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Item", "Comment", "Resource"], "weights": [0.85, 0.08, 0.07], "api_field": "lineType" },
+        { "name": "PRODUCT_ID", "type": "NUMBER", "gen": "fk", "ref_table": "PRODUCTS", "api_field": "lineObjectNumber" },
+        { "name": "QUANTITY", "type": "NUMBER", "gen": "int", "min": 1, "max": 25, "api_field": "quantity" },
+        { "name": "UNIT_PRICE", "type": "FLOAT", "gen": "float", "min": 25, "max": 2500, "round": 2, "api_field": "unitPrice" },
+        { "name": "LINE_AMOUNT", "type": "FLOAT", "gen": "float", "min": 50, "max": 45000, "round": 2, "api_field": "lineAmount" }
+      ]
+    },
+    {
+      "name": "INVOICES", "grain": "one row per sales invoice",
+      "endpoint": "GET /salesInvoices", "row_count": 55,
+      "columns": [
+        { "name": "INVOICE_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "INVOICE_NUMBER", "type": "VARCHAR(20)", "gen": "template", "template": "INV-{INVOICE_ID}", "api_field": "number" },
+        { "name": "CUSTOMER_ID", "type": "NUMBER", "gen": "fk", "ref_table": "CUSTOMERS", "api_field": "customerId" },
+        { "name": "INVOICE_DATE", "type": "DATE", "gen": "date", "min": "-12m", "max": "today", "api_field": "invoiceDate" },
+        { "name": "DUE_DATE", "type": "DATE", "gen": "date", "min": "-2m", "max": "+2m", "api_field": "dueDate" },
+        { "name": "TOTAL_AMOUNT", "type": "FLOAT", "gen": "float", "min": 1000, "max": 90000, "round": 2, "api_field": "totalAmountIncludingTax" },
+        { "name": "STATUS", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Paid", "Open", "Overdue"], "weights": [0.55, 0.3, 0.15], "api_field": "status" }
+      ]
+    },
+    {
+      "name": "GL_ENTRIES", "grain": "one row per general-ledger entry",
+      "endpoint": "GET /generalLedgerEntries", "row_count": 220,
+      "columns": [
+        { "name": "ENTRY_ID", "type": "NUMBER", "pk": true, "gen": "row_index", "api_field": "id" },
+        { "name": "POSTING_DATE", "type": "DATE", "gen": "date", "min": "-12m", "max": "today", "api_field": "postingDate" },
+        { "name": "ACCOUNT_NUMBER", "type": "VARCHAR(20)", "gen": "choice", "choices": ["4000", "5000", "6000", "1200", "2000"], "api_field": "accountNumber" },
+        { "name": "ACCOUNT_NAME", "type": "VARCHAR(60)", "gen": "choice", "choices": ["Revenue", "Cost of Goods Sold", "Operating Expense", "Accounts Receivable", "Accounts Payable"], "api_field": "accountName" },
+        { "name": "DEBIT_AMOUNT", "type": "FLOAT", "gen": "float", "min": 0, "max": 25000, "round": 2, "api_field": "debitAmount" },
+        { "name": "CREDIT_AMOUNT", "type": "FLOAT", "gen": "float", "min": 0, "max": 25000, "round": 2, "api_field": "creditAmount" },
+        { "name": "DOCUMENT_TYPE", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Invoice", "Payment", "Journal"], "api_field": "documentType" }
+      ]
+    },
+    {
+      "name": "COMPANY_KNOWLEDGE_BASE", "grain": "one row per knowledge-base document",
+      "endpoint": "internal policy wiki", "row_count": 18,
+      "columns": [
+        { "name": "DOC_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
+        { "name": "TITLE", "type": "VARCHAR(200)", "gen": "const", "value": "" },
+        { "name": "CATEGORY", "type": "VARCHAR(80)", "gen": "const", "value": "" },
+        { "name": "AUDIENCE", "type": "VARCHAR(40)", "gen": "const", "value": "" },
+        { "name": "CONTENT", "type": "VARCHAR", "gen": "const", "value": "" }
+      ]
+    },
+    {
+      "name": "CHAT_SESSIONS", "grain": "one row per chat conversation (written by the app)",
+      "is_chat_table": true,
+      "columns": [
+        { "name": "SESSION_ID", "type": "NUMBER", "pk": true, "autoincrement": true, "gen": "row_index" },
+        { "name": "USERNAME", "type": "VARCHAR(150)", "gen": "const", "value": "" },
+        { "name": "SESSION_NAME", "type": "VARCHAR(200)", "gen": "const", "value": "" },
+        { "name": "CREATED_AT", "type": "TIMESTAMP_NTZ", "default": "CURRENT_TIMESTAMP()", "gen": "const", "value": "" },
+        { "name": "LAST_ACTIVE", "type": "TIMESTAMP_NTZ", "default": "CURRENT_TIMESTAMP()", "gen": "const", "value": "" }
+      ]
+    },
+    {
+      "name": "CHAT_MESSAGES", "grain": "one row per chat message (written by the app)",
+      "is_chat_table": true,
+      "columns": [
+        { "name": "MESSAGE_ID", "type": "NUMBER", "pk": true, "autoincrement": true, "gen": "row_index" },
+        { "name": "SESSION_ID", "type": "NUMBER", "gen": "const", "value": "" },
+        { "name": "USERNAME", "type": "VARCHAR(150)", "gen": "const", "value": "" },
+        { "name": "ROLE", "type": "VARCHAR(20)", "gen": "const", "value": "" },
+        { "name": "CONTENT", "type": "VARCHAR", "gen": "const", "value": "" },
+        { "name": "SOURCES", "type": "VARCHAR", "gen": "const", "value": "" },
+        { "name": "CREATED_AT", "type": "TIMESTAMP_NTZ", "default": "CURRENT_TIMESTAMP()", "gen": "const", "value": "" }
+      ]
+    }
+  ],
+  "knowledge_base": {
+    "table": "COMPANY_KNOWLEDGE_BASE",
+    "content_col": "CONTENT",
+    "attributes": ["CATEGORY", "TITLE", "AUDIENCE"],
+    "service_name": "COMPANY_KB_SEARCH",
+    "target_lag": "1 hour",
+    "source_json": "kb_content.json"
+  },
+  "dashboard": {
+    "title": "Northwind ERP",
+    "icon": "🏭",
+    "assistant_intro": "Ask me about payment terms, returns, credit policy, and the product catalog.",
+    "chat_placeholder": "Ask about payment terms, returns, products...",
+    "suggested_prompts": ["What are our standard payment terms?", "What is the returns / RMA policy?", "How is a customer credit limit set?"],
+    "search_columns": ["CONTENT", "TITLE", "CATEGORY"],
+    "search_limit": 3
+  }
+}

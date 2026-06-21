@@ -1,0 +1,151 @@
+LEAVE_ID,EMPLOYEE_ID,LEAVE_TYPE,START_DATE,DAYS,STATUS,REASON
+1,41,Sick,2025-11-09,4,Approved,Here and ahead subject others test.
+2,33,Personal,2026-05-02,3,Pending,Resource business natural stand country himself behavior.
+3,45,Unpaid,2025-12-23,7,Approved,True dog need up.
+4,14,Sick,2025-10-10,4,Approved,Political be member another lot.
+5,2,Annual,2025-12-06,3,Pending,Situation short nearly catch fire impact.
+6,44,Annual,2025-12-29,8,Rejected,First put best about safe yes lead seem.
+7,28,Unpaid,2026-07-26,7,Approved,About stage everything forget.
+8,39,Annual,2026-03-08,6,Approved,Here street former total animal item to hope.
+9,28,Sick,2026-04-23,10,Approved,Begin actually positive trouble federal.
+10,44,Annual,2025-09-07,8,Approved,Remember region through wall.
+11,2,Annual,2026-04-21,7,Pending,Ability language food human stand.
+12,50,Annual,2026-08-09,10,Approved,Especially peace among past happen no crime information.
+13,23,Unpaid,2026-08-07,8,Rejected,Family cell move nothing perform.
+14,25,Annual,2026-04-28,2,Approved,Home learn address doctor.
+15,35,Annual,2025-12-25,2,Approved,Newspaper mind play brother more radio.
+16,48,Annual,2026-06-27,8,Approved,Sit authority air sort investment guy such.
+17,20,Sick,2026-08-17,8,Approved,Lawyer help really door against beautiful it.
+18,27,Annual,2026-08-07,3,Approved,Lawyer white miss next their herself.
+19,44,Personal,2026-05-08,8,Approved,Within network accept want today.
+20,12,Annual,2026-08-13,10,Approved,Various wait six guess member will.
+21,35,Sick,2025-09-15,5,Approved,Leave lead relationship provide.
+22,45,Sick,2025-11-19,8,Approved,Major his continue avoid.
+23,11,Annual,2026-06-25,6,Approved,Pull strong necessary exactly part or vote.
+24,44,Annual,2025-09-30,4,Approved,Entire class owner local mention avoid.
+25,16,Annual,2026-07-22,3,Pending,Specific think tree.
+26,3,Annual,2025-12-14,6,Pending,Return hand trouble black network.
+27,38,Personal,2025-12-17,8,Pending,Health street animal itself media.
+28,8,Annual,2025-11-01,3,Approved,Suddenly center suddenly.
+29,39,Sick,2026-04-03,8,Approved,Market a off visit anyone place.
+30,45,Annual,2026-08-19,9,Pending,Understand together improve week least.
+31,24,Sick,2025-10-15,7,Approved,Still everything ten yeah me.
+32,18,Annual,2026-08-16,7,Approved,Particularly thought those evidence around magazine present.
+33,6,Annual,2026-07-28,6,Approved,Consumer read response drive carry information hope.
+34,33,Personal,2025-10-31,2,Approved,Under some health loss arrive goal none.
+35,6,Sick,2026-07-28,4,Approved,Before off window particular.
+36,35,Annual,2026-01-03,8,Approved,Though body staff beat control ball they.
+37,43,Annual,2026-03-21,2,Approved,Dinner stage soldier apply notice current.
+38,15,Annual,2026-01-22,3,Approved,Left special order.
+39,26,Annual,2025-09-21,9,Pending,Above low town.
+40,8,Sick,2026-01-05,10,Approved,Theory off fine represent.
+41,20,Personal,2025-10-31,6,Pending,Dinner position something miss including.
+42,31,Personal,2025-11-26,8,Approved,Of tend include capital either what she.
+43,14,Annual,2026-03-08,9,Approved,Student because person return understand within.
+44,35,Personal,2025-09-27,3,Approved,Source specific bar top rise.
+45,33,Annual,2025-09-25,8,Approved,Along forward child simple.
+46,5,Sick,2025-12-26,7,Pending,Idea range attention throughout degree think so growth.
+47,24,Unpaid,2026-01-03,7,Approved,Model thing drop the character.
+48,28,Annual,2026-02-02,7,Approved,Art television without itself seat language open.
+49,43,Sick,2026-03-01,7,Approved,Wrong you through us me.
+50,15,Sick,2025-10-26,8,Approved,Field computer son him wonder traditional why.
+51,33,Personal,2026-07-18,3,Approved,Image case answer free knowledge.
+52,34,Annual,2025-09-29,7,Approved,Until relate hour large friend bag.
+53,27,Annual,2025-10-04,3,Pending,City north role act alone view.
+54,3,Annual,2026-03-11,5,Approved,Blue management record room program outside.
+55,22,Annual,2026-05-23,10,Approved,Between bar beyond single walk.
+56,20,Personal,2026-04-19,9,Approved,Over rather central south.
+57,49,Personal,2026-08-09,10,Approved,Radio approach reflect collection agency response.
+58,44,Sick,2026-07-26,10,Approved,Try fire turn environmental wait radio.
+59,22,Annual,2026-04-29,6,Approved,Throw project consider.
+60,40,Sick,2025-12-28,5,Rejected,Size tonight ground while action teacher.
+61,19,Sick,2025-12-16,6,Pending,Bad book Democrat.
+62,21,Personal,2026-06-07,4,Approved,Trade get something rather.
+63,20,Annual,2026-02-09,9,Approved,Employee plant pay allow executive what manage share.
+64,18,Annual,2026-03-27,4,Pending,Suddenly less nearly us remain.
+65,9,Personal,2026-08-09,5,Approved,Purpose popular tree project stop answer work explain.
+66,44,Annual,2026-05-26,9,Approved,Democratic fight return data today budget everyone call.
+67,30,Sick,2025-11-18,2,Approved,There into media.
+68,19,Sick,2025-12-05,10,Pending,Ask myself phone travel western.
+69,22,Annual,2026-07-19,8,Approved,They pattern company nation get seek.
+70,26,Annual,2026-01-07,10,Approved,Rather future animal hold almost imagine.
+71,22,Annual,2026-06-28,2,Approved,Notice officer popular huge investment trial station.
+72,25,Personal,2026-03-11,1,Approved,Available hit keep enjoy.
+73,17,Personal,2026-04-11,9,Approved,You may reason by threat.
+74,18,Sick,2026-03-25,4,Approved,Production now eye ok white.
+75,28,Sick,2026-04-29,10,Approved,Technology after hotel learn serve suffer.
+76,28,Annual,2025-10-22,3,Approved,Foreign design plan stock authority defense.
+77,24,Sick,2025-09-18,1,Pending,Finish candidate hospital experience least effort.
+78,18,Annual,2026-05-23,5,Approved,Article cost water reflect change smile film task.
+79,7,Personal,2026-08-08,7,Approved,Address skin number poor.
+80,43,Sick,2025-08-27,2,Approved,Stuff another each PM where new.
+81,40,Sick,2026-01-14,7,Approved,Member drug charge total because hotel.
+82,15,Sick,2026-06-10,5,Pending,Some pattern according to free.
+83,23,Personal,2025-11-07,1,Approved,Free theory none so myself follow not.
+84,21,Sick,2025-11-17,7,Approved,Because order order interest.
+85,40,Annual,2025-11-12,2,Approved,House discuss successful industry.
+86,40,Unpaid,2026-01-07,8,Approved,Something those center have.
+87,16,Personal,2025-12-13,4,Approved,Cost eight work three reason call traditional.
+88,11,Personal,2025-12-12,5,Approved,Before general class require.
+89,16,Sick,2026-04-01,10,Pending,Accept country red collection positive part produce.
+90,25,Annual,2025-12-18,2,Pending,Good travel size mission.
+91,27,Sick,2026-04-05,3,Approved,Reveal rather not its significant me deep.
+92,25,Personal,2026-03-04,1,Approved,Forward nearly room thing notice less.
+93,18,Annual,2026-08-01,8,Approved,Cold real high might remember seek significant.
+94,34,Annual,2025-09-01,8,Approved,Long she record teach attack.
+95,25,Personal,2026-06-28,4,Approved,Participant choice training look common meeting.
+96,46,Annual,2026-08-14,7,Approved,Which financial apply benefit method collection.
+97,26,Annual,2026-01-29,6,Approved,Class approach necessary past Mr personal stuff.
+98,16,Sick,2025-12-18,7,Approved,Career watch arrive become everything.
+99,31,Unpaid,2026-08-08,10,Approved,Pressure room under team security.
+100,45,Annual,2026-08-22,1,Approved,Instead well growth own.
+101,23,Annual,2025-09-01,8,Approved,Red pull save same camera.
+102,29,Personal,2025-10-06,7,Approved,Without everybody research chance system.
+103,15,Annual,2026-01-02,8,Approved,Response marriage sure camera.
+104,15,Personal,2026-07-18,9,Approved,During responsibility among since.
+105,13,Personal,2026-03-05,6,Approved,Me individual though imagine.
+106,15,Annual,2025-11-11,2,Approved,Culture radio station general soldier discuss.
+107,36,Annual,2025-10-01,9,Rejected,Lead green total benefit Mr car.
+108,29,Annual,2025-11-02,7,Approved,Raise prepare wrong bed.
+109,12,Annual,2026-01-28,3,Approved,Like her part team.
+110,15,Personal,2026-07-05,1,Approved,Old what design want.
+111,48,Annual,2026-05-29,8,Rejected,Enough success score.
+112,11,Annual,2025-11-30,10,Approved,At hit class nothing soon.
+113,5,Sick,2026-01-06,3,Approved,Voice information add argue image.
+114,50,Annual,2026-02-26,3,Approved,Why individual wide hotel west theory.
+115,12,Annual,2025-08-26,6,Pending,Himself red upon.
+116,50,Annual,2025-09-01,9,Approved,Now sound gun art.
+117,4,Annual,2025-11-15,1,Approved,Expert several effort prevent kid issue woman range.
+118,9,Annual,2026-06-29,6,Approved,Show response nothing gas few page cold couple.
+119,18,Annual,2026-04-11,3,Approved,History its street because.
+120,46,Annual,2026-07-15,10,Pending,Eight skill program try.
+121,5,Unpaid,2025-10-30,1,Approved,Wait never fly pull big method.
+122,34,Personal,2026-08-03,7,Approved,Player western move manage worry wear pay.
+123,47,Annual,2026-05-17,8,Rejected,Us challenge drive find star be over radio.
+124,34,Annual,2026-06-28,10,Approved,Determine nice source thought result.
+125,48,Annual,2025-12-28,9,Rejected,Water wind cost hand arm.
+126,11,Sick,2026-05-04,3,Pending,Door early we we alone ready back.
+127,14,Annual,2026-02-26,5,Approved,Summer more if hear responsibility have.
+128,27,Annual,2026-01-22,6,Approved,Sing hospital ready push material somebody husband.
+129,32,Annual,2025-08-30,4,Approved,Return wall trouble friend current.
+130,41,Sick,2026-04-09,10,Pending,Job nor yard establish hit.
+131,48,Annual,2026-01-23,7,Approved,Since him southern issue town call computer experience.
+132,2,Personal,2026-04-03,5,Approved,Movement traditional of.
+133,30,Sick,2026-02-28,4,Approved,True fill beautiful game set other follow vote.
+134,27,Unpaid,2025-12-25,3,Pending,High few land both two add thank.
+135,7,Annual,2025-09-18,6,Approved,Carry happy response would enter.
+136,25,Personal,2026-03-31,2,Approved,Business sport apply property enter name.
+137,23,Personal,2026-05-31,8,Approved,Easy today wait staff feeling.
+138,31,Annual,2026-02-07,4,Approved,Though degree special laugh include price.
+139,33,Annual,2025-10-12,3,Approved,Difficult which quite adult move rather business.
+140,36,Annual,2025-09-03,9,Approved,State turn center build happy near begin.
+141,34,Annual,2026-04-08,7,Approved,Exactly choose guy wide evidence to item.
+142,40,Annual,2026-07-06,6,Approved,Something employee such practice quickly any market.
+143,4,Personal,2026-06-17,2,Pending,Thank value quality reality.
+144,49,Annual,2026-05-12,1,Approved,Someone themselves star development know laugh.
+145,36,Sick,2026-06-07,9,Approved,Involve radio image crime about everything artist.
+146,10,Unpaid,2026-03-03,6,Approved,Understand picture ground.
+147,29,Sick,2026-07-13,5,Approved,Sport usually as until.
+148,49,Personal,2025-10-08,10,Approved,For mind worker already TV low.
+149,26,Annual,2025-09-13,5,Approved,Role assume control leg.
+150,9,Annual,2026-06-09,4,Approved,Build ago feeling whose realize.

@@ -1,0 +1,149 @@
+{
+  "@odata.context": "https://api.businesscentral.dynamics.com/v2.0/Sandbox/api/v2.0/companies(a1b2c3d4-0000-1111-2222-333344445555)/$metadata#salesOrders",
+  "value": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "number": "SO-100245",
+      "externalDocumentNumber": "PO-AX-7781",
+      "orderDate": "2026-06-01",
+      "postingDate": "2026-06-01",
+      "customerId": "9d8c7b6a-1111-2222-3333-444455556666",
+      "customerNumber": "C00310",
+      "customerName": "Northwind Traders Co.",
+      "status": "Open",
+      "currencyCode": "THB",
+      "pricesIncludeTax": false,
+      "totalAmountExcludingTax": 125000.00,
+      "totalTaxAmount": 8750.00,
+      "totalAmountIncludingTax": 133750.00,
+      "fullyShipped": false,
+      "lastModifiedDateTime": "2026-06-02T04:12:55Z",
+      "salesOrderLines": [
+        {
+          "id": "11110000-aaaa-bbbb-cccc-000000000001",
+          "sequence": 10000,
+          "lineType": "Item",
+          "itemId": "5c1a0000-0001-0001-0001-000000000010",
+          "lineObjectNumber": "ITEM-EVCHRG-22KW",
+          "description": "22 kW AC EV Charging Station",
+          "unitOfMeasureCode": "PCS",
+          "quantity": 5.0,
+          "unitPrice": 22000.00,
+          "discountPercent": 0.0,
+          "lineAmount": 110000.00,
+          "taxPercent": 7.0
+        },
+        {
+          "id": "11110000-aaaa-bbbb-cccc-000000000002",
+          "sequence": 20000,
+          "lineType": "Item",
+          "itemId": "5c1a0000-0001-0001-0001-000000000022",
+          "lineObjectNumber": "ITEM-CABLE-T2",
+          "description": "Type 2 Charging Cable 5m",
+          "unitOfMeasureCode": "PCS",
+          "quantity": 5.0,
+          "unitPrice": 3000.00,
+          "discountPercent": 0.0,
+          "lineAmount": 15000.00,
+          "taxPercent": 7.0
+        }
+      ]
+    },
+    {
+      "id": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "number": "SO-100246",
+      "externalDocumentNumber": null,
+      "orderDate": "2026-06-04",
+      "postingDate": "2026-06-04",
+      "customerId": "7e6d5c4b-1111-2222-3333-444455556677",
+      "customerNumber": "C00488",
+      "customerName": "Contoso Energy Solutions Ltd.",
+      "status": "Released",
+      "currencyCode": "THB",
+      "pricesIncludeTax": false,
+      "totalAmountExcludingTax": 48000.00,
+      "totalTaxAmount": 3360.00,
+      "totalAmountIncludingTax": 51360.00,
+      "fullyShipped": true,
+      "lastModifiedDateTime": "2026-06-05T09:48:01Z",
+      "salesOrderLines": [
+        {
+          "id": "22220000-aaaa-bbbb-cccc-000000000001",
+          "sequence": 10000,
+          "lineType": "Item",
+          "itemId": "5c1a0000-0001-0001-0001-000000000031",
+          "lineObjectNumber": "ITEM-EVCHRG-7KW",
+          "description": "7 kW Wallbox EV Charger",
+          "unitOfMeasureCode": "PCS",
+          "quantity": 4.0,
+          "unitPrice": 11000.00,
+          "discountPercent": 0.0,
+          "lineAmount": 44000.00,
+          "taxPercent": 7.0
+        },
+        {
+          "id": "22220000-aaaa-bbbb-cccc-000000000002",
+          "sequence": 20000,
+          "lineType": "Comment",
+          "itemId": "00000000-0000-0000-0000-000000000000",
+          "lineObjectNumber": "",
+          "description": "Includes 12-month on-site warranty",
+          "unitOfMeasureCode": "",
+          "quantity": 0.0,
+          "unitPrice": 0.0,
+          "discountPercent": 0.0,
+          "lineAmount": 0.0,
+          "taxPercent": 0.0
+        },
+        {
+          "id": "22220000-aaaa-bbbb-cccc-000000000003",
+          "sequence": 30000,
+          "lineType": "Resource",
+          "itemId": "5c1a0000-0001-0001-0001-000000000099",
+          "lineObjectNumber": "RES-INSTALL",
+          "description": "On-site installation labour",
+          "unitOfMeasureCode": "HOUR",
+          "quantity": 8.0,
+          "unitPrice": 500.00,
+          "discountPercent": 0.0,
+          "lineAmount": 4000.00,
+          "taxPercent": 7.0
+        }
+      ]
+    },
+    {
+      "id": "16fd2706-8baf-433b-82eb-8c7fada847da",
+      "number": "SO-100247",
+      "externalDocumentNumber": "PO-AX-7790",
+      "orderDate": "2026-06-10",
+      "postingDate": "2026-06-10",
+      "customerId": "5a4b3c2d-1111-2222-3333-444455556688",
+      "customerNumber": "C00512",
+      "customerName": "Fabrikam Mobility PCL",
+      "status": "Open",
+      "currencyCode": "USD",
+      "pricesIncludeTax": false,
+      "totalAmountExcludingTax": 9600.00,
+      "totalTaxAmount": 0.00,
+      "totalAmountIncludingTax": 9600.00,
+      "fullyShipped": false,
+      "lastModifiedDateTime": "2026-06-11T02:33:18Z",
+      "salesOrderLines": [
+        {
+          "id": "33330000-aaaa-bbbb-cccc-000000000001",
+          "sequence": 10000,
+          "lineType": "Item",
+          "itemId": "5c1a0000-0001-0001-0001-000000000045",
+          "lineObjectNumber": "ITEM-DCFC-60KW",
+          "description": "60 kW DC Fast Charger Module",
+          "unitOfMeasureCode": "PCS",
+          "quantity": 1.0,
+          "unitPrice": 9600.00,
+          "discountPercent": 0.0,
+          "lineAmount": 9600.00,
+          "taxPercent": 0.0
+        }
+      ]
+    }
+  ]
+}
