@@ -72,7 +72,7 @@ cd examples/hris_people/app && snow streamlit deploy --connection <your_connecti
 
 Open the URL from step 5, go to the **Assistant** tab, and ask "What is the PTO policy?" — you should get a grounded answer with a **Sources** expander. The other tabs are the People dashboards.
 
-> The bundle is rendered *in place* for the examples, so `deploy/`, `app/`, and `seed/` sit next to the spec. The committed `seed/` CSVs let you skip step 2 if you just want to deploy.
+> The bundle renders *in place* for the examples, next to the spec. Each example commits only its hand-authored inputs — `schema_spec.json`, `kb_content.json`, and the customized `app/streamlit_app.py` (the domain dashboards). The `seed/`, `deploy/`, and generic `app/` files are **git-ignored and regenerated** by steps 2–3 above, so on a fresh clone run those before deploying. Re-rendering is safe: `render.py` never overwrites your `app/streamlit_app.py`.
 
 ## Build a dashboard for *your* API
 
@@ -89,7 +89,8 @@ docs/                 CONTRACT.md (the schema_spec contract), WORKSHOP.md, DYNAM
 .cortex/skills/       the three Cortex Code skills (+ references/)
 templates/            schema_spec.schema.json, generator/generate_seed.py, render.py, app/* (RAG app)
 fixtures/             sample API responses to practice extraction on
-examples/             hris_people/ and dynamics_erp/ — complete, runnable examples
+examples/             hris_people/ and dynamics_erp/ — worked examples (spec + KB + dashboards
+                      committed; seed/, deploy/ and generic app/ files regenerated, git-ignored)
 tools/                validate_spec.py, lint_skill.py (static checks)
 ```
 
@@ -102,7 +103,7 @@ tools/                validate_spec.py, lint_skill.py (static checks)
 
 ## Security
 
-This kit connects to Snowflake through the `snow` CLI, which reads credentials from your local `~/.snowflake/connections.toml` — **never from this repo**. Connection files, `*.p8` keys, and `.env` files are git-ignored. Everything under `examples/*/seed/` is synthetic data produced by the generator; commit no real customer, employee, or client data.
+This kit connects to Snowflake through the `snow` CLI, which reads credentials from your local `~/.snowflake/connections.toml` — **never from this repo**. Connection files, `*.p8` keys, and `.env` files are git-ignored. Everything under `examples/*/seed/` is synthetic data produced by the generator (and itself git-ignored — regenerate it); commit no real customer, employee, or client data.
 
 ## License
 

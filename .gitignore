@@ -34,3 +34,17 @@ connections.toml
 output/
 dist/
 build/
+
+# ── Generated / rendered demo artifacts ──────────────────────────────────────
+# These are reproduced byte-for-byte from each example's committed inputs
+# (schema_spec.json + kb_content.json) — don't commit the output. Rebuild with:
+#   python3 templates/generator/generate_seed.py --spec <spec> --out <ex>/seed --today <date>
+#   python3 templates/render.py --spec <spec> --out <ex>
+# render.py preserves a hand-authored app/streamlit_app.py (it stays tracked).
+examples/*/seed/
+examples/*/deploy/
+examples/*/app/app_config.py
+examples/*/app/snowflake.yml
+examples/*/app/_core.py
+examples/*/app/rag_chat.py
+examples/*/app/environment.yml

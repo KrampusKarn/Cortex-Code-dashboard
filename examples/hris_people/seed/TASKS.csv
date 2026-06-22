@@ -1,9 +1,0 @@
-TASK_ID,TASK_NAME,IS_BILLABLE_DEFAULT
-1,Development,false
-2,Design,false
-3,PM,true
-4,QA,true
-5,Training,true
-6,Meeting,true
-7,Documentation,true
-8,Discovery,false

@@ -171,4 +171,5 @@ SEARCH_LIMIT    = 3
    (the original demo silently shipped two empty lookup tables — never again).
 6. **Parameterized SQL only** in the app: all writes to `CHAT_*` use `params=[...]`, never
    f-string interpolation of user/LLM content.
-7. **Synthetic data only** under `examples/*/generated/`.
+7. **Synthetic data only** under `examples/*/seed/` (git-ignored — regenerated from
+   the spec, never hand-edited; commit no real customer/employee/client data).

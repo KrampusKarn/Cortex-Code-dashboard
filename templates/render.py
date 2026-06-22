@@ -9,7 +9,9 @@ Produces, under <out>/:
     deploy/run.sh                one-shot orchestrator (snow CLI)
     app/app_config.py            constants the Streamlit app reads (no hardcoding elsewhere)
     app/snowflake.yml            Streamlit deployment definition
-    app/{_core,rag_chat,streamlit_app}.py, app/environment.yml   (copied from templates/app/)
+    app/{_core,rag_chat}.py, app/environment.yml                 (copied from templates/app/)
+    app/streamlit_app.py         the generic template — only when absent; an existing
+                                 (customized) one is preserved, never overwritten
 
 Everything keys off the spec's `app` block, so object names never drift.
 
@@ -230,8 +232,16 @@ def main() -> None:
 
     (out / "app" / "app_config.py").write_text(render_app_config(spec), encoding="utf-8")
     (out / "app" / "snowflake.yml").write_text(render_snowflake_yml(spec), encoding="utf-8")
-    for fname in ("_core.py", "rag_chat.py", "streamlit_app.py", "environment.yml"):
+    for fname in ("_core.py", "rag_chat.py", "environment.yml"):
         shutil.copy(APP_SRC / fname, out / "app" / fname)
+    # streamlit_app.py is the one app file worked examples customize (domain
+    # dashboards replace the generic Data Browser), so never clobber an existing
+    # one — only scaffold the generic template when the file is absent.
+    app_entry = out / "app" / "streamlit_app.py"
+    if app_entry.exists():
+        print(f"  • kept existing app/streamlit_app.py (customized dashboards preserved)")
+    else:
+        shutil.copy(APP_SRC / "streamlit_app.py", app_entry)
 
     print(f"✓ rendered bundle into {out}  (deploy/ + app/)")
 
