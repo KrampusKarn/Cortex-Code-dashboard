@@ -36,7 +36,7 @@ If you're contributing it as a new worked example, mirror the layout of
 
 ## Authoring or changing a skill
 
-Skills live under `.cortex/skills/<skill-name>/SKILL.md` with a `references/` folder.
+Skills live under `.snowflake/cortex/skills/<skill-name>/SKILL.md` with a `references/` folder.
 Follow the existing convention:
 
 - YAML frontmatter with `name`, `description`, and a `tools:` list.
@@ -45,7 +45,7 @@ Follow the existing convention:
 
 Lint structure before opening a PR:
 ```bash
-python3 tools/lint_skill.py .cortex/skills/<skill-name>/SKILL.md
+python3 tools/lint_skill.py .snowflake/cortex/skills/<skill-name>/SKILL.md
 ```
 Keep documented commands accurate to the real tool flags — re-read `templates/render.py` and
 `templates/generator/generate_seed.py` if you change behavior.

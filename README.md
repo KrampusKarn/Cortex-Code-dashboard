@@ -21,9 +21,9 @@ The result is a working demo — dashboards **plus a retrieval-augmented Cortex 
 
 | Skill | Input | Output |
 |---|---|---|
-| [`api-schema-extraction`](.cortex/skills/api-schema-extraction) | API docs / sample JSON | a validated `schema_spec.json` |
-| [`demo-data-generator`](.cortex/skills/demo-data-generator) | `schema_spec.json` | deterministic seed CSVs |
-| [`dashboard-rag-scaffold`](.cortex/skills/dashboard-rag-scaffold) | spec + knowledge base | Snowflake objects + Streamlit RAG app |
+| [`api-schema-extraction`](.snowflake/cortex/skills/api-schema-extraction) | API docs / sample JSON | a validated `schema_spec.json` |
+| [`demo-data-generator`](.snowflake/cortex/skills/demo-data-generator) | `schema_spec.json` | deterministic seed CSVs |
+| [`dashboard-rag-scaffold`](.snowflake/cortex/skills/dashboard-rag-scaffold) | spec + knowledge base | Snowflake objects + Streamlit RAG app |
 
 The contract that ties them together — `schema_spec.json` — is documented in [`docs/CONTRACT.md`](docs/CONTRACT.md).
 
@@ -105,13 +105,14 @@ See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for a facilitated run-of-show and [`d
 ## Repository layout
 
 ```
-docs/                 CONTRACT.md (the schema_spec contract), WORKSHOP.md, DYNAMICS_WALKTHROUGH.md
-.cortex/skills/       the three Cortex Code skills (+ references/)
-templates/            schema_spec.schema.json, generator/generate_seed.py, render.py, app/* (RAG app)
-examples/             hris_people/ and dynamics_erp/ — worked examples. Committed: spec, KB,
-                      app/ (for CREATE STREAMLIT), deploy/workspace_setup.sql (the Run-All deploy).
-                      Git-ignored/regenerated: seed/ CSVs + the numbered CLI SQL + run.sh
-tools/                validate_spec.py, lint_skill.py (static checks)
+docs/                      CONTRACT.md (the schema_spec contract), WORKSHOP.md, DYNAMICS_WALKTHROUGH.md
+AGENTS.md                  workspace instructions Cortex Code auto-loads every conversation
+.snowflake/cortex/skills/  the three Cortex Code skills (+ references/) — where Snowsight discovers them
+templates/                 schema_spec.schema.json, generator/generate_seed.py, render.py, app/* (RAG app)
+examples/                  hris_people/ and dynamics_erp/ — worked examples. Committed: spec, KB,
+                           app/ (for CREATE STREAMLIT), deploy/workspace_setup.sql (the Run-All deploy).
+                           Git-ignored/regenerated: seed/ CSVs + the numbered CLI SQL + run.sh
+tools/                     validate_spec.py, lint_skill.py (static checks)
 ```
 
 ## How it works
