@@ -108,7 +108,6 @@ See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for a facilitated run-of-show and [`d
 docs/                 CONTRACT.md (the schema_spec contract), WORKSHOP.md, DYNAMICS_WALKTHROUGH.md
 .cortex/skills/       the three Cortex Code skills (+ references/)
 templates/            schema_spec.schema.json, generator/generate_seed.py, render.py, app/* (RAG app)
-fixtures/             sample API responses to practice extraction on
 examples/             hris_people/ and dynamics_erp/ — worked examples. Committed: spec, KB,
                       app/ (for CREATE STREAMLIT), deploy/workspace_setup.sql (the Run-All deploy).
                       Git-ignored/regenerated: seed/ CSVs + the numbered CLI SQL + run.sh

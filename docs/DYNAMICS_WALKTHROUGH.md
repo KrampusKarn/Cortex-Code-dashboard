@@ -8,8 +8,7 @@ items) via `per_parent`.
 ## 0. The source: an OData response
 
 Dynamics 365 Business Central exposes OData. A `salesOrders` response is an envelope with a
-`value` array, and each order embeds a `salesOrderLines` array — see
-[`fixtures/dynamics_salesorders.sample.json`](../fixtures/dynamics_salesorders.sample.json):
+`value` array, and each order embeds a `salesOrderLines` array. A representative response looks like:
 
 ```jsonc
 {
@@ -30,7 +29,8 @@ Dynamics 365 Business Central exposes OData. A `salesOrders` response is an enve
 
 ## 1. Extract → `schema_spec.json` (skill: `api-schema-extraction`)
 
-Hand the fixture to Cortex Code. Key extraction decisions:
+Hand Cortex Code a sample `salesOrders` response (like the one above — from your Dynamics 365
+OData endpoint or its API docs). Key extraction decisions:
 
 - The `value` array element is the **`SALES_ORDERS`** table (grain: one order header). The OData
   envelope (`@odata.context`, paging) is metadata, not a table.

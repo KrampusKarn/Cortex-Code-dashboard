@@ -24,7 +24,7 @@ By the end, participants can:
 |---|---|---|
 | 0:00–0:20 | **Why** — the problem (demo before data lands) + the pipeline overview | talk |
 | 0:20–0:35 | **The contract** — walk `docs/CONTRACT.md` + a real `schema_spec.json` | talk + repo |
-| 0:35–1:10 | **Live build** — facilitator builds the HRIS example from a fixture using the 3 skills | demo |
+| 0:35–1:10 | **Live build** — facilitator builds the HRIS example from a sample API response using the 3 skills | demo |
 | 1:10–1:20 | Break | — |
 | 1:20–2:30 | **Lab** — participants build a dashboard for *their own* API | hands-on |
 | 2:30–2:50 | **Show & tell** — a few participants demo their Assistant tab | share |
@@ -32,13 +32,13 @@ By the end, participants can:
 
 ## Live build (facilitator script, ~35 min)
 
-Use `fixtures/freshteam_employees.sample.json` as the "API response" and narrate each skill:
+Paste a small sample HR API response — e.g. an `employees` endpoint payload with a nested array, grabbed from a public API's docs (Freshteam, BambooHR, etc.) — as the "API response" and narrate each skill:
 
-1. **Extract** — invoke `api-schema-extraction` on the fixture. Show how the response array becomes the `EMPLOYEES` table, nested arrays become child tables, and how it always adds the knowledge-base + chat tables. Validate: `python3 tools/validate_spec.py …`.
+1. **Extract** — invoke `api-schema-extraction` on that sample. Show how the response array becomes the `EMPLOYEES` table, nested arrays become child tables, and how it always adds the knowledge-base + chat tables. Validate: `python3 tools/validate_spec.py …`.
 2. **Generate** — invoke `demo-data-generator`. Show the printed row counts; open a CSV; emphasize determinism (`--seed`) and currency (`--today` / relative date tokens).
 3. **Scaffold** — invoke `dashboard-rag-scaffold`. For a browser-only audience: connect the repo to a Workspace, **Run All** on `deploy/workspace_setup.sql`, then create the Streamlit app *from repository*. (CLI alternative: render → `run.sh <conn>`, noting the **row-count assertion**, → `snow streamlit deploy`.) Open the app; ask the Assistant a question; show the **Sources** citations and that the current month has data.
 
-(If time is short, deploy the prebuilt `examples/hris_people` instead of building from the fixture.)
+(If time is short, deploy the prebuilt `examples/hris_people` instead of building from a sample.)
 
 ## Lab (participants, ~70 min)
 
