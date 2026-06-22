@@ -2,31 +2,50 @@
 """Render a deployable bundle from a schema_spec.json.
 
 Produces, under <out>/:
-    deploy/00_bootstrap.sql      warehouse + database + schema + stages
-    deploy/01_ddl.sql            CREATE TABLE for every table (incl. chat tables)
-    deploy/04_cortex_search.sql  the Cortex Search service for the RAG knowledge base
-    deploy/05_load_seed.sql      COPY INTO for every data table + row-count check
-    deploy/run.sh                one-shot orchestrator (snow CLI)
+    deploy/workspace_setup.sql   SELF-CONTAINED deploy for Snowflake Workspaces —
+                                 bootstrap + DDL + INSERT data + Cortex Search + verify.
+                                 Run the whole file in a Workspace worksheet (Run All);
+                                 no CLI, no PUT, no local Python needed.
+    deploy/00_bootstrap.sql      warehouse + database + schema + stages   ⎫
+    deploy/01_ddl.sql            CREATE TABLE for every table             ⎪ the CLI path
+    deploy/04_cortex_search.sql  the Cortex Search service                ⎬ (snow CLI +
+    deploy/05_load_seed.sql      COPY INTO + row-count check              ⎪  PUT + run.sh);
+    deploy/run.sh                one-shot orchestrator (snow CLI)         ⎭ advanced users
     app/app_config.py            constants the Streamlit app reads (no hardcoding elsewhere)
     app/snowflake.yml            Streamlit deployment definition
     app/{_core,rag_chat}.py, app/environment.yml                 (copied from templates/app/)
     app/streamlit_app.py         the generic template — only when absent; an existing
                                  (customized) one is preserved, never overwritten
 
-Everything keys off the spec's `app` block, so object names never drift.
+Everything keys off the spec's `app` block, so object names never drift. The
+workspace_setup.sql data rows come from the SAME generator as the seed CSVs
+(templates/generator/generate_seed.py), so the two stay byte-consistent.
 
 Usage:
-    python render.py --spec path/to/schema_spec.json --out path/to/bundle/
+    python render.py --spec path/to/schema_spec.json --out path/to/bundle/ \
+        [--today 2026-06-22] [--seed 42]   # pin for byte-stable workspace_setup.sql
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import shutil
+from datetime import date, datetime
 from pathlib import Path
 
 TEMPLATES_DIR = Path(__file__).resolve().parent
 APP_SRC = TEMPLATES_DIR / "app"
+
+
+def _load_generator():
+    """Load the seed generator as a module so workspace_setup.sql embeds the SAME
+    rows the CSVs would contain (one source of truth for the data)."""
+    gen_path = TEMPLATES_DIR / "generator" / "generate_seed.py"
+    spec = importlib.util.spec_from_file_location("kit_generate_seed", gen_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 FILE_FORMAT = ("FILE_FORMAT=(TYPE=CSV FIELD_OPTIONALLY_ENCLOSED_BY='\"' "
                "SKIP_HEADER=1 NULL_IF=('','NULL','null'))")
@@ -211,17 +230,149 @@ entities:
 """
 
 
+# ── workspace_setup.sql — self-contained, runs in a Snowflake Workspace ────────
+_NUMERIC = ("NUMBER", "INT", "FLOAT", "DECIMAL", "DOUBLE", "REAL", "NUMERIC")
+_SEMI = ("VARIANT", "ARRAY", "OBJECT")
+
+
+def _sql_quote(s: str) -> str:
+    return "'" + str(s).replace("'", "''") + "'"
+
+
+def sql_literal(value, col_type: str) -> str:
+    """Format one generated Python value as a Snowflake SQL literal for its column type."""
+    if value is None or value == "":
+        return "NULL"
+    if isinstance(value, bool):          # before numeric: bool is a subclass of int
+        return "TRUE" if value else "FALSE"
+    t = col_type.upper()
+    if any(k in t for k in _SEMI):
+        return f"PARSE_JSON({_sql_quote(json.dumps(value))})"
+    if any(k in t for k in _NUMERIC):
+        return str(value)
+    return _sql_quote(value)             # VARCHAR + DATE/TIMESTAMP (implicit cast on insert)
+
+
+def _inserts_for_table(table: dict, rows: list, batch: int = 500) -> str:
+    cols = [c["name"] for c in table["columns"]]
+    types = {c["name"]: c["type"] for c in table["columns"]}
+    if not rows:
+        return ""
+    lines = []
+    for start in range(0, len(rows), batch):
+        chunk = rows[start:start + batch]
+        values = ",\n".join(
+            "    (" + ", ".join(sql_literal(r.get(c), types[c]) for c in cols) + ")"
+            for r in chunk
+        )
+        lines.append(f"INSERT INTO {table['name']} ({', '.join(cols)}) VALUES\n{values};")
+    return "\n".join(lines)
+
+
+def build_rows(spec: dict, spec_path: Path, today: date, seed: int) -> dict:
+    """Generate the same typed rows the CSV generator would, in memory."""
+    gen = _load_generator()
+    import random
+    from faker import Faker
+    random.seed(seed)
+    Faker.seed(seed)
+    specs_by_table = {t["name"]: t for t in spec["tables"]}
+    kb = spec.get("knowledge_base", {})
+    kb_name = kb.get("table")
+    kb_path = spec_path.parent / kb["source_json"] if kb.get("source_json") else None
+    generated, counter = {}, {"n": 0}
+    for table in gen.order_tables(spec["tables"]):
+        if table.get("is_chat_table"):
+            generated[table["name"]] = []
+            continue
+        if table["name"] == kb_name and kb_path:
+            generated[table["name"]] = gen.load_kb_rows(table, kb_path)
+        else:
+            counter["n"] = 0
+            generated[table["name"]] = gen.gen_table(table, generated, specs_by_table, today, counter)
+    return generated
+
+
+def render_streamlit_hint(spec: dict) -> str:
+    app, dash = spec["app"], spec["dashboard"]
+    name = "".join(ch if ch.isalnum() else "_" for ch in dash["title"]).upper() or "DASHBOARD_APP"
+    fq = f"{app['database']}.{app['schema']}"
+    return f"""-- ─────────────────────────────────────────────────────────────────────────
+-- OPTIONAL — create the Streamlit app from THIS Git repo (no file upload).
+-- Prereq: connect this repo to your Workspace, then reference it as a Git
+-- repository object. Fill in <GIT_REPO> (the repository name) and <BRANCH>,
+-- and <PATH_TO_APP> (this example's app/ folder, relative to the repo root,
+-- e.g. examples/hris_people/app).
+-- ─────────────────────────────────────────────────────────────────────────
+-- ALTER GIT REPOSITORY {fq}.<GIT_REPO> FETCH;
+-- CREATE OR REPLACE STREAMLIT {fq}.{name}
+--     FROM '@{fq}.<GIT_REPO>/branches/<BRANCH>/<PATH_TO_APP>/'
+--     MAIN_FILE = 'streamlit_app.py'
+--     QUERY_WAREHOUSE = {app['warehouse']};
+-- Tip: in Snowsight you can also create the app via the UI —
+--   Projects » Streamlit » + Streamlit App » From repository.
+"""
+
+
+def render_workspace_sql(spec: dict, spec_path: Path, today: date, seed: int) -> str:
+    app = spec["app"]
+    rows_by_table = build_rows(spec, spec_path, today, seed)
+    parts = [
+        f"-- Generated by render.py — SELF-CONTAINED deploy for Snowflake Workspaces.",
+        f"-- Run the whole file in a Workspace SQL worksheet (Run All). No CLI / PUT / Python.",
+        f"-- Synthetic demo data (seed={seed}, today={today.isoformat()}); chat tables stay empty.",
+        f"-- Prereq: GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE {app.get('role', 'SYSADMIN')};",
+        "",
+        "-- 1) Warehouse + database + schema",
+        f"USE ROLE {app.get('role', 'SYSADMIN')};",
+        f"CREATE WAREHOUSE IF NOT EXISTS {app['warehouse']}",
+        "    WAREHOUSE_SIZE = XSMALL AUTO_SUSPEND = 60 AUTO_RESUME = TRUE INITIALLY_SUSPENDED = TRUE;",
+        f"CREATE DATABASE IF NOT EXISTS {app['database']} COMMENT = 'Cortex Dashboard Kit demo — synthetic data';",
+        f"CREATE SCHEMA IF NOT EXISTS {app['database']}.{app['schema']};",
+        f"USE SCHEMA {app['database']}.{app['schema']};",
+        f"USE WAREHOUSE {app['warehouse']};",
+        "",
+        "-- 2) Tables",
+        render_ddl(spec).split("\n", 4)[4],   # DDL body (drop the USE-header lines)
+        "-- 3) Seed data (synthetic; INSERTed inline so no stage/PUT is needed)",
+    ]
+    for t in spec["tables"]:
+        if t.get("is_chat_table"):
+            continue
+        block = _inserts_for_table(t, rows_by_table.get(t["name"], []))
+        if block:
+            parts.append(f"-- {t['name']} — {t.get('grain', '')}".rstrip())
+            parts.append(block)
+            parts.append("")
+    parts.append("-- 4) Cortex Search service for the RAG knowledge base")
+    parts.append(render_cortex(spec).split("\n", 3)[3])  # drop the USE-header lines
+    parts.append("-- 5) Verification — every data table should be non-empty")
+    checks = "\n    UNION ALL ".join(
+        f"SELECT '{t['name']}' AS TBL, COUNT(*) AS N FROM {t['name']}"
+        for t in spec["tables"] if not t.get("is_chat_table"))
+    parts.append(f"SELECT * FROM (\n    {checks}\n) ORDER BY N ASC, TBL;")
+    parts.append("")
+    parts.append(render_streamlit_hint(spec))
+    return "\n".join(parts)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--spec", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--today", default=None, help="YYYY-MM-DD; default = real today (for workspace_setup.sql data)")
+    ap.add_argument("--seed", type=int, default=42, help="RNG seed for workspace_setup.sql data")
     args = ap.parse_args()
 
-    spec = apply_defaults(json.loads(Path(args.spec).read_text()))
+    spec_path = Path(args.spec)
+    spec = apply_defaults(json.loads(spec_path.read_text()))
+    today = datetime.strptime(args.today, "%Y-%m-%d").date() if args.today else date.today()
     out = Path(args.out)
     (out / "deploy").mkdir(parents=True, exist_ok=True)
     (out / "app").mkdir(parents=True, exist_ok=True)
 
+    (out / "deploy" / "workspace_setup.sql").write_text(
+        render_workspace_sql(spec, spec_path, today, args.seed), encoding="utf-8")
     (out / "deploy" / "00_bootstrap.sql").write_text(render_bootstrap(spec["app"]))
     (out / "deploy" / "01_ddl.sql").write_text(render_ddl(spec))
     (out / "deploy" / "04_cortex_search.sql").write_text(render_cortex(spec))

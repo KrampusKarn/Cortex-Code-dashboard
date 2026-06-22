@@ -1,5 +1,20 @@
 # Deploy checklist (ordered commands)
 
+## Path A — Snowflake Workspaces (browser, no CLI; recommended for non-technical users)
+
+No shell, no `PUT`, no Python — everything runs in Snowsight.
+
+1. **Connect the repo**: *Projects » Workspaces » From Git repository* → paste the repo URL (public repo = no auth).
+2. **Grant Cortex once** (role admin): run in a worksheet
+   `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE SYSADMIN;`
+3. **Open `examples/<example>/deploy/workspace_setup.sql` → Run All.** Creates warehouse/db/schema, all tables, loads the demo data inline (`INSERT`s), and creates the Cortex Search service. The last query is a row-count check — every data table should be non-empty.
+4. **Create the Streamlit app from the repo**: *Projects » Streamlit » + Streamlit App » From repository* → point at `examples/<example>/app/`, `MAIN_FILE = streamlit_app.py`. (Or run the commented `CREATE STREAMLIT … FROM @<repo>/branches/<branch>/…/app/` at the bottom of `workspace_setup.sql`.)
+5. Wait for Cortex Search to finish indexing (minutes), then open the app → **Assistant** → ask a suggested prompt → confirm a grounded answer with a **Sources** expander.
+
+> `workspace_setup.sql` and `app/` are committed for exactly this path; `seed/` CSVs and the numbered CLI SQL are git-ignored/regenerated.
+
+## Path B — CLI / local IDE (advanced)
+
 Replace `<conn>` with your `snow` connection name and `<SPEC>` with the path to your spec.
 For the worked examples, `<SPEC>` is e.g. `examples/hris_people/schema_spec.json` and the
 bundle renders in place (so `--out` is the example directory).

@@ -36,7 +36,7 @@ Use `fixtures/freshteam_employees.sample.json` as the "API response" and narrate
 
 1. **Extract** — invoke `api-schema-extraction` on the fixture. Show how the response array becomes the `EMPLOYEES` table, nested arrays become child tables, and how it always adds the knowledge-base + chat tables. Validate: `python3 tools/validate_spec.py …`.
 2. **Generate** — invoke `demo-data-generator`. Show the printed row counts; open a CSV; emphasize determinism (`--seed`) and currency (`--today` / relative date tokens).
-3. **Scaffold** — invoke `dashboard-rag-scaffold`: render → `run.sh <conn>` (point out the **row-count assertion**) → `snow streamlit deploy`. Open the app; ask the Assistant a question; show the **Sources** citations and that the current month has data.
+3. **Scaffold** — invoke `dashboard-rag-scaffold`. For a browser-only audience: connect the repo to a Workspace, **Run All** on `deploy/workspace_setup.sql`, then create the Streamlit app *from repository*. (CLI alternative: render → `run.sh <conn>`, noting the **row-count assertion**, → `snow streamlit deploy`.) Open the app; ask the Assistant a question; show the **Sources** citations and that the current month has data.
 
 (If time is short, deploy the prebuilt `examples/hris_people` instead of building from the fixture.)
 

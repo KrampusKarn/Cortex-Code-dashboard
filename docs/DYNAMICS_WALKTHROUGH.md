@@ -80,8 +80,15 @@ Confirm `SALES_ORDER_LINES.csv` has several lines per order (every `ORDER_ID` fr
 
 ## 3. Scaffold + deploy (skill: `dashboard-rag-scaffold`)
 
+**Snowflake Workspaces (no CLI) — recommended:** connect the repo to a Workspace, open
+`examples/dynamics_erp/deploy/workspace_setup.sql` and **Run All** (bootstrap + tables +
+inline data + Cortex Search), then create the Streamlit app *from repository* pointed at
+`examples/dynamics_erp/app/`. See the README's "Deploy in Snowflake Workspaces" section.
+
+**CLI / local IDE (advanced)** — regenerate locally and load via the `snow` CLI:
+
 ```bash
-python3 templates/render.py --spec examples/dynamics_erp/schema_spec.json --out examples/dynamics_erp
+python3 templates/render.py --spec examples/dynamics_erp/schema_spec.json --out examples/dynamics_erp --today 2026-06-22
 examples/dynamics_erp/deploy/run.sh <your_connection>
 cd examples/dynamics_erp/app && snow streamlit deploy --connection <your_connection> --replace && cd -
 ```

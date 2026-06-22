@@ -36,15 +36,18 @@ dist/
 build/
 
 # ── Generated / rendered demo artifacts ──────────────────────────────────────
-# These are reproduced byte-for-byte from each example's committed inputs
-# (schema_spec.json + kb_content.json) — don't commit the output. Rebuild with:
+# Reproduced from each example's committed inputs (schema_spec.json + kb_content.json)
+# by templates/render.py + the generator, so the bulky output stays out of git.
+# What IS committed — because the Snowflake Workspace deploy path reads it
+# server-side from the repo (no local Python/PUT):
+#   • examples/*/app/*                    — for CREATE STREAMLIT FROM @repo
+#   • examples/*/deploy/workspace_setup.sql — the one-file "Run All" deploy
+# Rebuild the ignored rest with (pin --today for byte-stable output):
 #   python3 templates/generator/generate_seed.py --spec <spec> --out <ex>/seed --today <date>
-#   python3 templates/render.py --spec <spec> --out <ex>
-# render.py preserves a hand-authored app/streamlit_app.py (it stays tracked).
+#   python3 templates/render.py --spec <spec> --out <ex> --today <date>
 examples/*/seed/
-examples/*/deploy/
-examples/*/app/app_config.py
-examples/*/app/snowflake.yml
-examples/*/app/_core.py
-examples/*/app/rag_chat.py
-examples/*/app/environment.yml
+examples/*/deploy/00_bootstrap.sql
+examples/*/deploy/01_ddl.sql
+examples/*/deploy/04_cortex_search.sql
+examples/*/deploy/05_load_seed.sql
+examples/*/deploy/run.sh

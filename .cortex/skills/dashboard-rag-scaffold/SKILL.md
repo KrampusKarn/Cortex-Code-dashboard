@@ -11,7 +11,7 @@ tools:
 - A `schema_spec.json` validates AND seed CSVs have been generated (and a curated `kb_content.json` exists).
 - The user wants to deploy/stand up the dashboard, create the Cortex Search service, or publish the Streamlit app + RAG chat.
 - The user asks to "deploy the dashboard", "set up the Cortex chat", "ship it to Snowflake", or "re-point this at production data".
-- Keywords: deploy, Snowflake, Cortex Search, Streamlit, RAG, run.sh, snow CLI, go live.
+- Keywords: deploy, Snowflake, Cortex Search, Streamlit, RAG, run.sh, snow CLI, go live, Snowflake Workspaces, workspace_setup.sql, "Run All", browser deploy, no CLI.
 
 Do NOT use this skill to design the schema (`api-schema-extraction`) or to generate data (`demo-data-generator`).
 
@@ -33,6 +33,7 @@ Do NOT use this skill to design the schema (`api-schema-extraction`) or to gener
 python3 templates/render.py --spec path/to/schema_spec.json --out path/to/bundle/
 ```
 Produces:
+- `bundle/deploy/workspace_setup.sql` — **self-contained deploy for Snowflake Workspaces**: bootstrap + DDL + the demo data as inline `INSERT`s + the Cortex Search service + a row-count check. Runs entirely in a browser SQL worksheet (Run All) — no CLI, no `PUT`, no local Python.
 - `bundle/deploy/00_bootstrap.sql` — warehouse + database + schema + stages
 - `bundle/deploy/01_ddl.sql` — `CREATE TABLE` for every table (incl. chat tables, with AUTOINCREMENT PKs + timestamp defaults)
 - `bundle/deploy/04_cortex_search.sql` — the Cortex Search service over the knowledge-base table
@@ -40,9 +41,24 @@ Produces:
 - `bundle/deploy/run.sh` — one-shot orchestrator
 - `bundle/app/{app_config.py, snowflake.yml, _core.py, rag_chat.py, streamlit_app.py, environment.yml}`
 
+**Two deploy paths — pick by the user's environment:**
+- **Snowflake Workspaces (browser, non-technical, recommended):** use only `workspace_setup.sql` + the repo's `app/` — see step 2A. The `00/01/04/05` SQL and `run.sh` are NOT needed.
+- **CLI / local IDE (advanced):** `snow` CLI + `run.sh` + `snow streamlit deploy` — steps 2B–4.
+
 For the worked examples the bundle is rendered in place (the `deploy/` and `app/` dirs sit next to the spec and `seed/`), so you can point `run.sh` straight at the existing `seed/`.
 
-## 2. Load data + create the search service
+## 2A. Snowflake Workspaces path (browser, no CLI)
+
+For non-technical users deploying from a Snowflake Workspace — no shell, no `PUT`, no Python:
+
+1. **Connect the repo to a Workspace**: Snowsight → *Projects » Workspaces » From Git repository* (a public repo needs no auth).
+2. **Grant Cortex once** (role admin): `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE <app.role>;`
+3. **Open `deploy/workspace_setup.sql` → Run All.** It creates the warehouse/db/schema, all tables, loads the demo data inline (`INSERT`s — no stage/`PUT`), and creates the Cortex Search service. The final query is the row-count check; confirm every data table is non-empty.
+4. **Create the Streamlit app from the repo**: *Projects » Streamlit » + Streamlit App » From repository*, point at this example's `app/` with `MAIN_FILE = streamlit_app.py`. The equivalent `CREATE STREAMLIT … FROM @<repo>/branches/<branch>/<path>/app/` is a commented template at the bottom of `workspace_setup.sql` — fill in the Git repository object name + branch.
+
+Then skip to step 3 (let indexing finish) and step 5 (verify). Steps 2B–4 below are the CLI alternative.
+
+## 2B. Load data + create the search service (CLI)
 
 ```bash
 bundle/deploy/run.sh <snow_connection_name>
