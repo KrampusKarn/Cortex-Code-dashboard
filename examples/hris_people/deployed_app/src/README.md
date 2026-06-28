@@ -22,6 +22,7 @@ from the mock API, which needs an external-access integration).
 | 5 | `05_semantic_analyst.sql` | **`GOLD.HR_ANALYST` semantic view** — the Cortex Analyst model behind the "Ask Your Data" tab (people / time / projects / leave / recruiting). |
 | 6 | `01_document_ingestion.sql` | The RAG chat backend: `SP_REBUILD_DOC_CHUNKS`, the `COMPANY_DOCS` stream + ingest/refresh tasks, and the `COMPANY_KB_SEARCH` Cortex Search service over `DOCUMENT_CHUNKS` (the "Documents" assistant). |
 | 7 | `deploy_app.sql` **or** `snow streamlit deploy` | Deploy the dashboard. **Workspace / Cortex Code-native:** `deploy_app.sql` (Git repository object + `CREATE STREAMLIT` from `deployed_app/app/`). **CLI:** `snow streamlit deploy` from `../app/`. Then load docs: PUT `../docs/*.md` to `@COMPANY_DOCS` and `CALL SP_REBUILD_DOC_CHUNKS()`. |
+| — | `connect_git.sql` | (Standalone) wire Snowflake → the public GitHub repo (API integration + git repository object + fetch). Included inline in `deploy_app.sql`; run it on its own when you want the git stage first (e.g. `COPY FILES` docs, or letting CoCo read repo files). |
 | — | `migrations/` | (Optional) one-off schema migrations for accounts that predate a change — not needed for a fresh build. |
 
 ```bash
