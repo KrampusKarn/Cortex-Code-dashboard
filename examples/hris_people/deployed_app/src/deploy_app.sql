@@ -11,13 +11,8 @@
 --   02_bronze.sql → 03_silver.sql → ingest (SP_INGEST_ALL_BRONZE + SP_BUILD_SILVER)
 --   → 04_gold.sql → 05_semantic_analyst.sql → 01_document_ingestion.sql
 --
--- ┌─ FILL IN (3 spots, marked « » below) — PUBLIC GitHub repo, no credentials ─┐
--- │   «OWNER»  : the GitHub org/user        (e.g. seven-peaks-software)         │
--- │   «REPO»   : the repository name                                            │
--- │   «BRANCH» : the branch holding this code (e.g. main)                       │
--- │ Snowflake needs string LITERALS here, so replace the tokens directly        │
--- │ (find/replace) — session variables are not allowed in these positions.      │
--- └────────────────────────────────────────────────────────────────────────────┘
+-- Points at the PUBLIC repo KrampusKarn/Cortex-Code-dashboard @ main (no credentials).
+-- If you fork/rename, update the owner/repo/branch in the three string literals below.
 --
 -- Run as ACCOUNTADMIN. Idempotent (CREATE OR REPLACE / IF NOT EXISTS).
 -- NOTE: names the app `DASHBOARD_SPS` directly — intended for a FRESH account (the
@@ -31,14 +26,14 @@ USE SCHEMA PUBLIC;
 -- 1) Git API integration (PUBLIC repo => no secret / GIT_CREDENTIALS) ---
 CREATE OR REPLACE API INTEGRATION GIT_API_INTEGRATION
   API_PROVIDER = GIT_HTTPS_API
-  API_ALLOWED_PREFIXES = ('https://github.com/«OWNER»')
+  API_ALLOWED_PREFIXES = ('https://github.com/KrampusKarn')
   ENABLED = TRUE
   COMMENT = 'Read-only access to the public Cortex Dashboard Kit repo for app deploy';
 
 -- 2) Git repository object + fetch the latest commit --------------------
 CREATE OR REPLACE GIT REPOSITORY DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO
   API_INTEGRATION = GIT_API_INTEGRATION
-  ORIGIN = 'https://github.com/«OWNER»/«REPO».git';
+  ORIGIN = 'https://github.com/KrampusKarn/Cortex-Code-dashboard.git';
 
 ALTER GIT REPOSITORY DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO FETCH;
 
@@ -46,7 +41,7 @@ ALTER GIT REPOSITORY DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO FETCH;
 --    ROOT_LOCATION serves the app folder (streamlit_app.py + environment.yml);
 --    MAIN_FILE is the monolith.
 CREATE OR REPLACE STREAMLIT DEMO_EMPLOYEE_APP.PUBLIC.DASHBOARD_SPS
-  ROOT_LOCATION = '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/«BRANCH»/examples/hris_people/deployed_app/app'
+  ROOT_LOCATION = '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/main/examples/hris_people/deployed_app/app'
   MAIN_FILE = 'streamlit_app.py'
   QUERY_WAREHOUSE = 'DEMO_EMPLOYEE_APP'
   TITLE = 'Employee 360 Dashboard'
@@ -63,7 +58,7 @@ CREATE OR REPLACE STREAMLIT DEMO_EMPLOYEE_APP.PUBLIC.DASHBOARD_SPS
 -- RELATED — load the RAG docs from the git stage (the other PUT the CLI used to do).
 -- Run after 01_document_ingestion.sql created @COMPANY_DOCS + SP_REBUILD_DOC_CHUNKS:
 --   COPY FILES INTO @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS
---     FROM '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/«BRANCH»/examples/hris_people/deployed_app/docs/';
+--     FROM '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';
 --   ALTER STAGE DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS REFRESH;
 --   CALL DEMO_EMPLOYEE_APP.PUBLIC.SP_REBUILD_DOC_CHUNKS();
 -- =====================================================================
