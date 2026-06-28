@@ -69,7 +69,7 @@ if ! curl -s --max-time 2 "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then
   echo $! > "$API_PID"
 fi
 curl -s --retry 30 --retry-delay 1 --retry-connrefused "http://127.0.0.1:$PORT/health" >/dev/null
-echo "mock API serving on http://localhost:$PORT"
+echo "mock API serving on http://localhost:$PORT/docs"
 
 # 3) (re)start the tunnel ---------------------------------------------
 stop_one "$TUN_PID" >/dev/null 2>&1 || true; rm -f "$TUN_LOG"
@@ -84,7 +84,7 @@ if [ "$BACKEND" = "ngrok" ]; then
   # confirm the public endpoint is live (skip ngrok's browser interstitial)
   curl -s --retry 20 --retry-delay 1 --retry-connrefused -H 'ngrok-skip-browser-warning: true' "$URL/health" >/dev/null \
     || { echo "ngrok tunnel did not come up; see $TUN_LOG"; exit 1; }
-  echo "ngrok tunnel (stable): $URL"
+  echo "ngrok tunnel (stable): $URL/docs"
   if [ "$SET_RULE" = "1" ]; then
     snow sql -c "$CONN" --role ACCOUNTADMIN -q \
       "ALTER NETWORK RULE DEMO_EMPLOYEE_APP.BRONZE.OMNI_HARVEST_EGRESS SET VALUE_LIST=('$HOST');" >/dev/null
@@ -104,7 +104,7 @@ else
   done
   [ -z "$URL" ] && { echo "tunnel URL not found; see $TUN_LOG"; exit 1; }
   HOST="${URL#https://}"
-  echo "cloudflare tunnel (ephemeral): $URL"
+  echo "cloudflare tunnel (ephemeral): $URL/docs"
   if [ "$UPDATE_RULE" = "1" ]; then
     snow sql -c "$CONN" --role ACCOUNTADMIN -q \
       "ALTER NETWORK RULE DEMO_EMPLOYEE_APP.BRONZE.OMNI_HARVEST_EGRESS SET VALUE_LIST=('$HOST');" >/dev/null
