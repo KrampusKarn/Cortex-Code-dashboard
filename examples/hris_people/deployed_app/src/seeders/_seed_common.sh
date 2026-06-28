@@ -9,7 +9,7 @@
 set -euo pipefail
 
 # Defaults (override with flags)
-CONN="sevenpeaks_partner_demo"
+CONN="<your-connection>"   # override with --connection (resolved from your local connections.toml)
 DB="DEMO_EMPLOYEE_APP"
 SCHEMA="PUBLIC"
 ROWS=50

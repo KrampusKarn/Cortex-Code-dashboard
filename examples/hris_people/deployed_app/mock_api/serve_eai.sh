@@ -28,7 +28,7 @@ cd "$(dirname "$0")"
 # shellcheck disable=SC1091
 [ -f .tunnel.env ] && source .tunnel.env
 
-CONN="${CONN:-sevenpeaks_partner_demo}"
+CONN="${CONN:-<your-connection>}"   # set the real name in .tunnel.env (gitignored) or pass --connection
 PORT="${PORT:-8000}"
 NGROK_DOMAIN="${NGROK_DOMAIN:-}"
 BACKEND="auto"        # auto -> ngrok if NGROK_DOMAIN set, else cloudflare

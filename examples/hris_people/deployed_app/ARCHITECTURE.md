@@ -39,7 +39,7 @@ source), **docs** (RAG corpus):
 | `app/streamlit_app.py` | **The running app (monolith)** — exactly what the Streamlit runtime executes. Edit it directly. |
 | `app/environment.yml` | Conda dependencies (Python 3.11, Streamlit, snowflake-snowpark-python, pandas, altair) |
 | `app/snowflake.yml` | Redeploy descriptor targeting the existing app object (`DASHBOARD_SPS`) |
-| `src/00_setup.sql` | From-scratch infra + all 40 tables |
+| `src/00_setup.sql` | From-scratch infra + all 38 tables |
 | `src/01_document_ingestion.sql` | RAG chat backend (`COMPANY_KB_SEARCH` over `DOCUMENT_CHUNKS`) |
 | `src/02_bronze.sql` … `05_semantic_analyst.sql` | Bronze→Silver→Gold ELT + the `GOLD.HR_ANALYST` semantic view |
 | `src/seeders/` | Per-source synthetic-data seeders (OmniHR / Harvest) |

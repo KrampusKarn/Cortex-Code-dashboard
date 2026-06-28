@@ -97,8 +97,8 @@ and Bronze entirely and seed Silver directly.
 4. Seed Silver directly (OmniHR + Harvest):
    ```bash
    cd src/seeders
-   ./seed_omnihr.sh  --connection 7ptrial --schema SILVER --reset
-   ./seed_harvest.sh --connection 7ptrial --schema SILVER --reset
+   ./seed_omnihr.sh  --connection <your-trial-connection> --schema SILVER --reset
+   ./seed_harvest.sh --connection <your-trial-connection> --schema SILVER --reset
    ```
 5. Load the documents + deploy the app (below).
 

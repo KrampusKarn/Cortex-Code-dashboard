@@ -2,7 +2,7 @@
 -- reset_for_coco.sql  --  Stage the DEMO account for a Cortex Code (CoCo) rebuild
 --
 -- Trial accounts can't use External Access Integration, so the live API-extraction
--- demo runs on the DEMO account (sevenpeaks_partner_demo / DEMO_EMPLOYEE_APP), which
+-- demo runs on the DEMO account (DEMO_EMPLOYEE_APP), which
 -- already has everything built. This clears ONLY the medallion so CoCo can rebuild
 -- Bronze -> Silver -> Gold (+ the HR_ANALYST semantic view) from empty, while leaving
 -- PUBLIC (the app, chat tables, Cortex Search, docs) and the warehouses intact.
@@ -39,5 +39,5 @@ DROP SCHEMA IF EXISTS DEMO_EMPLOYEE_APP.BRONZE;
 -- The live app is auto-named (YFE09SNXUSHHL2EH); deploy_app.sql creates one named
 -- DASHBOARD_SPS. To avoid two apps, drop the existing one first, then have CoCo run
 -- deploy_app.sql:
---   DROP STREAMLIT IF EXISTS DEMO_EMPLOYEE_APP.PUBLIC.YFE09SNXUSHHL2EH;
+   DROP STREAMLIT IF EXISTS DEMO_EMPLOYEE_APP.PUBLIC.YFE09SNXUSHHL2EH;
 -- =====================================================================

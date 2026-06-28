@@ -25,14 +25,14 @@ USE SCHEMA PUBLIC;
 -- 1) Git API integration (PUBLIC repo => no secret / GIT_CREDENTIALS) ----
 CREATE OR REPLACE API INTEGRATION GIT_API_INTEGRATION
   API_PROVIDER = GIT_HTTPS_API
-  API_ALLOWED_PREFIXES = ('https://github.com/KrampusKarn')
+  API_ALLOWED_PREFIXES = ('<your github repo url>')
   ENABLED = TRUE
   COMMENT = 'Read-only access to the public Cortex Dashboard Kit repo';
 
 -- 2) Git repository object + pull the latest commit --------------------
 CREATE OR REPLACE GIT REPOSITORY DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO
   API_INTEGRATION = GIT_API_INTEGRATION
-  ORIGIN = 'https://github.com/KrampusKarn/Cortex-Code-dashboard.git';
+  ORIGIN = '<your github repo url>';
 
 ALTER GIT REPOSITORY DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO FETCH;
 

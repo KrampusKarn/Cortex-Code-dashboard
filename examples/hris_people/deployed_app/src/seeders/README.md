@@ -60,7 +60,7 @@ Prereq: run `../00_setup.sql` once so the base tables exist.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--connection` | `sevenpeaks_partner_demo` | snow CLI connection |
+| `--connection` | `<your-connection>` | snow CLI connection (from your local `connections.toml`) |
 | `--database` / `--schema` | `DEMO_EMPLOYEE_APP` / `PUBLIC` | target |
 | `--rows N` | `50` | default rows per table (a profile's `tables.<T>.rows` overrides) |
 | `--seed N` | `42` | RNG seed (deterministic output) |

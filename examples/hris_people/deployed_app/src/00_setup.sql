@@ -2,11 +2,11 @@
 -- 00_setup.sql  --  From-scratch infrastructure for the DASHBOARD_SPS app
 -- (Employee 360 / DEMO_EMPLOYEE_APP.PUBLIC).
 --
--- Captured from the live DEMO account (sevenpeaks_partner_demo) via
--- GET_DDL on 2026-06-24, then made non-destructive: every object uses
+-- Captured from the live DEMO account via GET_DDL, then made
+-- non-destructive: every object uses
 -- IF NOT EXISTS / CREATE ... IF NOT EXISTS so re-running NEVER drops data.
 -- This file creates STRUCTURE ONLY (warehouses, db, schema, stages, the
--- 40 tables empty). Demo data already lives in the account; see the data
+-- 38 tables empty). Demo data already lives in the account; see the data
 -- note at the bottom to (re)load from a stage.
 --
 -- Run order:  00_setup.sql  ->  01_document_ingestion.sql  ->  deploy the
