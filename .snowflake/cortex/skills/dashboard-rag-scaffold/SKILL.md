@@ -111,9 +111,11 @@ The app reads only logical table names from `app_config.py`. To go from demo →
 
 # Examples
 
-## Example 1: Deploy the HRIS example end to end
+## Example 1: Deploy a rendered example end to end
 
-Agent: `python3 templates/render.py --spec examples/hris_people/schema_spec.json --out examples/hris_people` → `examples/hris_people/deploy/run.sh my_demo_conn` (loads + verifies row counts + creates `COMPANY_KB_SEARCH`) → `cd examples/hris_people/app && snow streamlit deploy --connection my_demo_conn --replace` → opens the app, asks "What is the PTO policy?", confirms a grounded answer with sources.
+Agent: `python3 templates/render.py --spec examples/<example>/schema_spec.json --out examples/<example>` → `examples/<example>/deploy/run.sh my_demo_conn` (loads + verifies row counts + creates `COMPANY_KB_SEARCH`) → `cd examples/<example>/app && snow streamlit deploy --connection my_demo_conn --replace` → opens the app, asks a question grounded in the knowledge base, confirms a grounded answer with sources.
+
+> Note: `examples/hris_people` is **not** a templated example — it is a hand-built live app (`deployed_app/`, deployed to `DEMO_EMPLOYEE_APP`). To demonstrate the templated render → deploy flow, render your own example.
 
 ## Example 2: Assistant returns nothing
 

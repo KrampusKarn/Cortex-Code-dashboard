@@ -1,0 +1,103 @@
+{
+  "_comment": "Harvest (v2) column profiles for project-delivery, time, and billing tables. FK columns (EMPLOYEE_ID -> EMPLOYEES, USER_ID -> HARVEST_USERS, CLIENT_ID -> CLIENTS, PROJECT_ID -> PROJECTS, TASK_ID -> TASKS) are resolved by the engine and drawn from real parent rows seeded earlier.",
+
+  "tables": {
+    "CLIENTS": { "rows": 8 },
+    "PROJECTS": { "rows": 12 },
+    "TASKS": { "rows": 15 },
+    "HARVEST_USERS": { "rows": 250 },
+    "PROJECT_ASSIGNMENTS": { "rows": 400 },
+    "PROJECT_BUDGETS": { "rows": 12 },
+    "PROJECT_TASKS": { "rows": 37 },
+    "USER_ASSIGNMENTS": { "rows": 400 },
+    "TIME_ENTRIES": { "rows": 8000 },
+    "EXPENSE_ENTRIES": { "rows": 120 },
+    "AVAILABILITY": { "rows": 1500 },
+    "UTILIZATION": { "rows": 1500 },
+    "INVOICES": { "rows": 14 },
+    "INVOICE_LINE_ITEMS": { "rows": 30 },
+    "ESTIMATES": { "rows": 10 }
+  },
+
+  "columns": {
+    "CLIENTS.NAME": { "gen": "faker", "faker_provider": "company" },
+    "CLIENTS.INDUSTRY": { "gen": "choice", "choices": ["Banking", "Retail", "Healthcare", "Logistics", "Telecom", "Government", "Manufacturing", "Technology"] },
+    "CLIENTS.IS_ACTIVE": { "gen": "bool", "p_true": 0.85 },
+
+    "PROJECTS.PROJECT_NAME": { "gen": "faker", "faker_provider": "catch_phrase" },
+    "PROJECTS.CLIENT": { "gen": "faker", "faker_provider": "company" },
+    "PROJECTS.STATUS": { "gen": "choice", "choices": ["Active", "Completed", "On Hold", "Planned"], "weights": [0.5, 0.3, 0.1, 0.1] },
+    "PROJECTS.START_DATE": { "gen": "date", "min": "-2y", "max": "-1m" },
+    "PROJECTS.END_DATE": { "gen": "date", "min": "-1m", "max": "+1y" },
+    "PROJECTS.BUDGET": { "gen": "float", "min": 50000, "max": 500000, "round": 2 },
+    "PROJECTS.HOURLY_RATE": { "gen": "float", "min": 80, "max": 250, "round": 2 },
+    "PROJECTS.FEES": { "gen": "float", "min": 50000, "max": 500000, "round": 2 },
+    "PROJECTS.COST_BUDGET": { "gen": "float", "min": 30000, "max": 300000, "round": 2 },
+    "PROJECTS.BUDGET_BY": { "gen": "choice", "choices": ["Project", "Task", "Person", "None"] },
+    "PROJECTS.IS_BILLABLE": { "gen": "bool", "p_true": 0.85 },
+
+    "TASKS.TASK_NAME": { "gen": "enumerate", "choices": ["Development", "Design", "Project Management", "QA", "DevOps", "Consulting", "Research", "Documentation", "Code Review", "Meetings", "Support", "Training", "Architecture", "Data Engineering", "Analytics"] },
+    "TASKS.IS_BILLABLE_DEFAULT": { "gen": "bool", "p_true": 0.8 },
+
+    "HARVEST_USERS.FIRST_NAME": { "gen": "faker", "faker_provider": "first_name" },
+    "HARVEST_USERS.LAST_NAME": { "gen": "faker", "faker_provider": "last_name" },
+    "HARVEST_USERS.ROLES": { "gen": "choice", "choices": ["Developer", "Designer", "Manager", "Administrator", "Consultant"] },
+    "HARVEST_USERS.DEFAULT_HOURLY_RATE": { "gen": "float", "min": 80, "max": 250, "round": 2 },
+    "HARVEST_USERS.COST_RATE": { "gen": "float", "min": 30, "max": 120, "round": 2 },
+    "HARVEST_USERS.WEEKLY_CAPACITY": { "gen": "choice", "choices": [40, 35, 20], "weights": [0.8, 0.1, 0.1] },
+
+    "PROJECT_ASSIGNMENTS.ROLE": { "gen": "choice", "choices": ["Developer", "Designer", "Project Manager", "QA Engineer", "Tech Lead", "Architect", "Analyst"] },
+    "PROJECT_ASSIGNMENTS.ALLOCATION_PCT": { "gen": "choice", "choices": [25, 50, 75, 100], "weights": [0.2, 0.3, 0.2, 0.3] },
+    "PROJECT_ASSIGNMENTS.START_DATE": { "gen": "date", "min": "-18m", "max": "-1m" },
+    "PROJECT_ASSIGNMENTS.END_DATE": { "gen": "date", "min": "-1m", "max": "+9m" },
+    "PROJECT_ASSIGNMENTS.HOURLY_RATE": { "gen": "float", "min": 80, "max": 250, "round": 2 },
+    "PROJECT_ASSIGNMENTS.BUDGET": { "gen": "float", "min": 10000, "max": 100000, "round": 2 },
+    "PROJECT_ASSIGNMENTS.IS_PROJECT_MANAGER": { "gen": "bool", "p_true": 0.15 },
+
+    "PROJECT_BUDGETS.BUDGET_AMOUNT": { "gen": "float", "min": 50000, "max": 500000, "round": 2 },
+    "PROJECT_BUDGETS.AMOUNT_SPENT": { "gen": "float", "min": 0, "max": 400000, "round": 2 },
+    "PROJECT_BUDGETS.AMOUNT_REMAINING": { "gen": "float", "min": 0, "max": 200000, "round": 2 },
+    "PROJECT_BUDGETS.HOURS_SPENT": { "gen": "float", "min": 0, "max": 4000, "round": 2 },
+    "PROJECT_BUDGETS.HOURS_REMAINING": { "gen": "float", "min": 0, "max": 2000, "round": 2 },
+
+    "PROJECT_TASKS.HOURLY_RATE": { "gen": "float", "min": 80, "max": 250, "round": 2 },
+    "PROJECT_TASKS.BUDGET": { "gen": "float", "min": 5000, "max": 80000, "round": 2 },
+
+    "USER_ASSIGNMENTS.IS_PROJECT_MANAGER": { "gen": "bool", "p_true": 0.15 },
+    "USER_ASSIGNMENTS.IS_ACTIVE": { "gen": "bool", "p_true": 0.8 },
+    "USER_ASSIGNMENTS.HOURLY_RATE": { "gen": "float", "min": 80, "max": 250, "round": 2 },
+    "USER_ASSIGNMENTS.BUDGET": { "gen": "float", "min": 10000, "max": 100000, "round": 2 },
+
+    "TIME_ENTRIES.SPENT_DATE": { "gen": "date", "min": "-12m", "max": "today" },
+    "TIME_ENTRIES.HOURS": { "gen": "float", "min": 0.5, "max": 8, "round": 1 },
+    "TIME_ENTRIES.IS_BILLABLE": { "gen": "bool", "p_true": 0.75 },
+    "TIME_ENTRIES.NOTES": { "gen": "faker", "faker_provider": "sentence" },
+
+    "EXPENSE_ENTRIES.EXPENSE_DATE": { "gen": "date", "min": "-9m", "max": "today" },
+    "EXPENSE_ENTRIES.CATEGORY": { "gen": "choice", "choices": ["Travel", "Meals", "Software", "Hardware", "Training", "Office Supplies", "Client Entertainment"] },
+    "EXPENSE_ENTRIES.AMOUNT": { "gen": "float", "min": 10, "max": 2000, "round": 2 },
+    "EXPENSE_ENTRIES.IS_BILLABLE": { "gen": "bool", "p_true": 0.5 },
+    "EXPENSE_ENTRIES.NOTES": { "gen": "faker", "faker_provider": "sentence" },
+
+    "AVAILABILITY.AVAIL_DATE": { "gen": "date", "min": "-3m", "max": "+1m" },
+    "AVAILABILITY.STATUS": { "gen": "choice", "choices": ["Available", "On Project", "On Leave", "Bench"], "weights": [0.2, 0.6, 0.1, 0.1] },
+
+    "UTILIZATION.MONTH": { "gen": "date", "min": "-12m", "max": "today" },
+    "UTILIZATION.UTILIZATION_RATE": { "gen": "float", "min": 40, "max": 100, "round": 1 },
+    "UTILIZATION.TARGET_RATE": { "gen": "const", "value": 80 },
+
+    "INVOICES.AMOUNT": { "gen": "float", "min": 5000, "max": 200000, "round": 2 },
+    "INVOICES.ISSUE_DATE": { "gen": "date", "min": "-1y", "max": "today" },
+    "INVOICES.DUE_DATE": { "gen": "date", "min": "today", "max": "+2m" },
+    "INVOICES.STATUS": { "gen": "choice", "choices": ["Paid", "Sent", "Overdue", "Draft"], "weights": [0.5, 0.25, 0.15, 0.1] },
+
+    "INVOICE_LINE_ITEMS.DESCRIPTION": { "gen": "faker", "faker_provider": "catch_phrase" },
+    "INVOICE_LINE_ITEMS.QUANTITY": { "gen": "float", "min": 1, "max": 40, "round": 1 },
+    "INVOICE_LINE_ITEMS.UNIT_PRICE": { "gen": "float", "min": 80, "max": 250, "round": 2 },
+    "INVOICE_LINE_ITEMS.AMOUNT": { "gen": "float", "min": 1000, "max": 50000, "round": 2 },
+
+    "ESTIMATES.AMOUNT": { "gen": "float", "min": 10000, "max": 300000, "round": 2 },
+    "ESTIMATES.ISSUE_DATE": { "gen": "date", "min": "-1y", "max": "today" },
+    "ESTIMATES.STATUS": { "gen": "choice", "choices": ["Draft", "Sent", "Accepted", "Declined"], "weights": [0.2, 0.3, 0.3, 0.2] }
+  }
+}

@@ -1,0 +1,4 @@
+# Mock OmniHR + Harvest API. Faker comes from the repo-root requirements.txt
+# (the data engine is shared with src/seeders/_seedlib.py).
+fastapi>=0.110
+uvicorn>=0.29

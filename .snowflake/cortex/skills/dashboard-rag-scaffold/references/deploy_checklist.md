@@ -15,9 +15,9 @@ No shell, no `PUT`, no Python — everything runs in Snowsight.
 
 ## Path B — CLI / local IDE (advanced)
 
-Replace `<conn>` with your `snow` connection name and `<SPEC>` with the path to your spec.
-For the worked examples, `<SPEC>` is e.g. `examples/hris_people/schema_spec.json` and the
-bundle renders in place (so `--out` is the example directory).
+Replace `<conn>` with your `snow` connection name and `<SPEC>` with the path to your spec
+(e.g. `examples/<example>/schema_spec.json`). The bundle renders in place, so `--out` is the
+example directory.
 
 ```bash
 # 0. Sanity: connection works
@@ -28,19 +28,19 @@ snow sql -c <conn> -q "GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE SYSADMI
 
 # 2. Validate the spec and (re)generate the seed data
 python3 tools/validate_spec.py <SPEC>
-python3 templates/generator/generate_seed.py --spec <SPEC> --out examples/hris_people/seed --today 2026-06-22
+python3 templates/generator/generate_seed.py --spec <SPEC> --out examples/<example>/seed --today 2026-06-22
 
 # 3. Render the deployable bundle (deploy/ + app/)
-python3 templates/render.py --spec <SPEC> --out examples/hris_people
+python3 templates/render.py --spec <SPEC> --out examples/<example>
 
 # 4. Bootstrap + DDL + load + Cortex Search + row-count verification
-examples/hris_people/deploy/run.sh <conn>
+examples/<example>/deploy/run.sh <conn>
 
 # 5. Confirm the Cortex Search service exists and finished indexing
-snow sql -c <conn> -q "SHOW CORTEX SEARCH SERVICES IN SCHEMA DEMO_EMPLOYEE_APP.PUBLIC;"
+snow sql -c <conn> -q "SHOW CORTEX SEARCH SERVICES IN SCHEMA <db>.PUBLIC;"
 
 # 6. Deploy the Streamlit app (multi-file; reads snowflake.yml in this dir)
-cd examples/hris_people/app
+cd examples/<example>/app
 snow streamlit deploy --connection <conn> --replace
 cd -
 

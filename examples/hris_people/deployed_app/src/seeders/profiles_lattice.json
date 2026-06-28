@@ -1,0 +1,26 @@
+{
+  "_comment": "Lattice column profiles for performance + feedback tables. EMPLOYEE_ID / CREATED_BY resolve to EMPLOYEES (seeded by the OmniHR seeder first). SENTIMENT_SCORE mirrors a SNOWFLAKE.CORTEX.SENTIMENT score in [-1, 1].",
+
+  "tables": {
+    "PERFORMANCE_REVIEWS": { "rows": 126 },
+    "EMPLOYEE_NOTES": { "rows": 20 }
+  },
+
+  "columns": {
+    "PERFORMANCE_REVIEWS.REVIEW_DATE": { "gen": "date", "min": "-2y", "max": "today" },
+    "PERFORMANCE_REVIEWS.REVIEW_PERIOD": { "gen": "choice", "choices": ["H1 2024", "H2 2024", "H1 2025", "H2 2025", "H1 2026"] },
+    "PERFORMANCE_REVIEWS.RATING": { "gen": "float", "min": 1, "max": 5, "round": 1 },
+    "PERFORMANCE_REVIEWS.SENTIMENT": { "gen": "choice", "choices": ["Positive", "Neutral", "Negative"], "weights": [0.6, 0.3, 0.1] },
+    "PERFORMANCE_REVIEWS.SENTIMENT_SCORE": { "gen": "float", "min": -1, "max": 1, "round": 3 },
+    "PERFORMANCE_REVIEWS.GOALS_MET": { "gen": "int", "min": 0, "max": 6, "_note": "max <= GOALS_TOTAL.min so met never exceeds total" },
+    "PERFORMANCE_REVIEWS.GOALS_TOTAL": { "gen": "int", "min": 6, "max": 12 },
+    "PERFORMANCE_REVIEWS.MANAGER_COMMENTS": { "gen": "faker", "faker_provider": "paragraph" },
+
+    "EMPLOYEE_NOTES.NOTE_DATE": { "gen": "date", "min": "-1y", "max": "today" },
+    "EMPLOYEE_NOTES.NOTE_TYPE": { "gen": "choice", "choices": ["Feedback", "1:1", "Recognition", "Concern", "Coaching", "Ops Flag"] },
+    "EMPLOYEE_NOTES.CONTENT": { "gen": "faker", "faker_provider": "sentence", "faker_args": [12] },
+    "EMPLOYEE_NOTES.PRIORITY": { "gen": "choice", "choices": ["Low", "Medium", "High"], "weights": [0.5, 0.35, 0.15] },
+    "EMPLOYEE_NOTES.IS_RESOLVED": { "gen": "bool", "p_true": 0.6 },
+    "EMPLOYEE_NOTES.TAGS": { "gen": "choice", "choices": ["performance", "growth", "wellbeing", "staffing", "urgent"] }
+  }
+}

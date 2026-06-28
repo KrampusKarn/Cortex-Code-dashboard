@@ -58,6 +58,13 @@ in a Workspace (it needs the `snow` CLI and client-side `PUT`).
   `app/streamlit_app.py` dashboards), and `deploy/workspace_setup.sql`.
 - **Git-ignored / regenerated** (don't add them back): `seed/` CSVs and the numbered CLI SQL + `run.sh`.
   Re-rendering is safe — `render.py` never overwrites a customized `app/streamlit_app.py`.
+- **Exception — `examples/hris_people` is NOT templated output.** It is a hand-built live app
+  (`deployed_app/`, deployed to `DEMO_EMPLOYEE_APP`): a 14-tab dashboard in
+  `deployed_app/app/streamlit_app.py` plus a document-ingestion RAG chat. Its from-scratch setup
+  SQL lives in `deployed_app/src/` (`00_setup.sql` … `05_semantic_analyst.sql` + the Bronze→Silver→Gold
+  medallion), captured from the live account. Do NOT run `render.py` against it or treat
+  `schema_spec.json`/`kb_content.json` there as live — they are lineage only. To exercise the
+  templated render → deploy flow, render your own example with `render.py`.
 
 ## Guardrails
 

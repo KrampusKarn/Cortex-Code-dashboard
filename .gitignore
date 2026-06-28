@@ -31,10 +31,12 @@ connections.toml
 # ── Build / temp ─────────────────────────────────────────────────────────────
 *.tmp
 *.log
+*.pid
 output/
 dist/
 build/
 
+CLAUDE.md
 # ── Generated / rendered demo artifacts ──────────────────────────────────────
 # Reproduced from each example's committed inputs (schema_spec.json + kb_content.json)
 # by templates/render.py + the generator, so the bulky output stays out of git.
@@ -51,3 +53,6 @@ examples/*/deploy/01_ddl.sql
 examples/*/deploy/04_cortex_search.sql
 examples/*/deploy/05_load_seed.sql
 examples/*/deploy/run.sh
+
+# ── Captured external API spec (large, untracked) ─────────────────────────────
+openapi.json

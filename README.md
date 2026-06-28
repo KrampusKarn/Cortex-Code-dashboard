@@ -27,12 +27,15 @@ The result is a working demo — dashboards **plus a retrieval-augmented Cortex 
 
 The contract that ties them together — `schema_spec.json` — is documented in [`docs/CONTRACT.md`](docs/CONTRACT.md).
 
-## Worked examples
+## Worked example
 
 | Example | Source shape | What it shows |
 |---|---|---|
-| [`examples/hris_people`](examples/hris_people) | Freshteam / Harvest / Lattice (HR) | Workforce, joiners/attrition, sentiment, training % + RAG over a company handbook |
-| [`examples/dynamics_erp`](examples/dynamics_erp) | Microsoft Dynamics 365 (OData) | Revenue, top customers, AR aging, orders/inventory + RAG over finance policies; demonstrates parent→child (`per_parent`) modeling |
+| [`examples/hris_people`](examples/hris_people) | OmniHR / Harvest / Lattice (HR) | A **hand-built live app** (not templated output). Its deployable form is [`deployed_app/`](examples/hris_people/deployed_app) — 14 dashboard tabs + a document-ingestion RAG chat, deployed to `DEMO_EMPLOYEE_APP`. The kept `schema_spec.json` / `kb_content.json` are lineage only. |
+
+> The **templated** pipeline (extract → generate → scaffold) runs against *your own* API via the
+> three skills — see [**Build a dashboard for your API**](#build-a-dashboard-for-your-api) below.
+> The deploy walkthroughs use `examples/<your_example>/…` for the bundle you render in that step.
 
 ## Prerequisites
 
@@ -49,15 +52,13 @@ That is **all** you need for the Snowflake Workspaces path below — it runs ent
 
 ## Deploy in Snowflake Workspaces (recommended — no local tooling)
 
-For non-technical users: everything runs in the browser — no shell, no `PUT`, no Python. Each example ships a single self-contained [`deploy/workspace_setup.sql`](examples/hris_people/deploy/workspace_setup.sql): warehouse/db/schema + tables + the synthetic demo data as `INSERT`s + the Cortex Search service.
+For non-technical users: everything runs in the browser — no shell, no `PUT`, no Python. A rendered example ships a single self-contained `deploy/workspace_setup.sql`: warehouse/db/schema + tables + the synthetic demo data as `INSERT`s + the Cortex Search service.
 
 1. **Connect this repo to a Workspace** — in Snowsight: *Projects » Workspaces » From Git repository*, paste the repo URL (a public repo needs no auth). ([docs](https://docs.snowflake.com/en/user-guide/ui-snowsight/workspaces-git))
 2. **Grant Cortex once** (a role admin): `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE SYSADMIN;`
-3. **Open `examples/hris_people/deploy/workspace_setup.sql` → Run All.** It creates everything and loads the data inline; the final query is a row-count check (every table should be non-empty).
-4. **Create the Streamlit app from the repo** — *Projects » Streamlit » + Streamlit App » From repository*, point it at `examples/hris_people/app/`, main file `streamlit_app.py`. (The equivalent `CREATE STREAMLIT … FROM @repo` is at the bottom of `workspace_setup.sql`.)
-5. Give Cortex Search a few minutes to finish its initial build, then open the app → **Assistant** tab → ask "What is the PTO policy?" — you should get a grounded answer with a **Sources** expander.
-
-> Swap `dynamics_erp` for `hris_people` to deploy the Dynamics 365 example instead.
+3. **Open your example's `examples/<your_example>/deploy/workspace_setup.sql` → Run All.** It creates everything and loads the data inline; the final query is a row-count check (every table should be non-empty).
+4. **Create the Streamlit app from the repo** — *Projects » Streamlit » + Streamlit App » From repository*, point it at `examples/<your_example>/app/`, main file `streamlit_app.py`. (The equivalent `CREATE STREAMLIT … FROM @repo` is at the bottom of `workspace_setup.sql`.)
+5. Give Cortex Search a few minutes to finish its initial build, then open the app → **Assistant** tab → ask "What are our standard payment terms?" — you should get a grounded answer with a **Sources** expander.
 
 ## Quick start — CLI / local IDE (advanced)
 
@@ -69,28 +70,28 @@ pip install -r requirements.txt
 snow connection test -c <your_connection>
 
 # 1. validate the example spec
-python3 tools/validate_spec.py examples/hris_people/schema_spec.json
+python3 tools/validate_spec.py examples/<your_example>/schema_spec.json
 
 # 2. (re)generate the synthetic seed data — omit --today for "current" data,
 #    or pin it for byte-stable output
 python3 templates/generator/generate_seed.py \
-    --spec examples/hris_people/schema_spec.json \
-    --out  examples/hris_people/seed --today 2026-06-22
+    --spec examples/<your_example>/schema_spec.json \
+    --out  examples/<your_example>/seed --today 2026-06-22
 
 # 3. render the deployable bundle (deploy SQL + Streamlit app) in place
-python3 templates/render.py --spec examples/hris_people/schema_spec.json \
-    --out examples/hris_people
+python3 templates/render.py --spec examples/<your_example>/schema_spec.json \
+    --out examples/<your_example>
 
 # 4. bootstrap + load + create the Cortex Search service (+ row-count verification)
-examples/hris_people/deploy/run.sh <your_connection>
+examples/<your_example>/deploy/run.sh <your_connection>
 
 # 5. deploy the Streamlit app (run from the app dir; it reads snowflake.yml)
-cd examples/hris_people/app && snow streamlit deploy --connection <your_connection> --replace && cd -
+cd examples/<your_example>/app && snow streamlit deploy --connection <your_connection> --replace && cd -
 ```
 
-Open the URL from step 5, go to the **Assistant** tab, and ask "What is the PTO policy?" — you should get a grounded answer with a **Sources** expander. The other tabs are the People dashboards.
+Open the URL from step 5, go to the **Assistant** tab, and ask a question grounded in your knowledge base — you should get an answer with a **Sources** expander. The other tabs are the example's dashboards.
 
-> **What's in git, per example.** Tracked: the hand-authored inputs (`schema_spec.json`, `kb_content.json`, the customized `app/streamlit_app.py`) **plus** the artifacts the browser path needs server-side — `deploy/workspace_setup.sql` and the rest of `app/`. Git-ignored and regenerated by the CLI steps above: the bulky `seed/` CSVs and the numbered SQL + `run.sh`. Re-rendering is safe — `render.py` never overwrites your `app/streamlit_app.py`.
+> **What's in git, per templated example.** Tracked: the hand-authored inputs (`schema_spec.json`, `kb_content.json`, the customized `app/streamlit_app.py`) **plus** the artifacts the browser path needs server-side — `deploy/workspace_setup.sql` and the rest of `app/`. Git-ignored and regenerated by the CLI steps above: the bulky `seed/` CSVs and the numbered SQL + `run.sh`. Re-rendering is safe — `render.py` never overwrites your `app/streamlit_app.py`. (`hris_people` is the exception — a hand-built live app under [`deployed_app/`](examples/hris_people/deployed_app), not templated output.)
 
 ## Build a dashboard for *your* API
 
@@ -100,18 +101,21 @@ Open the URL from step 5, go to the **Assistant** tab, and ask "What is the PTO 
 
 The scaffold writes a self-contained `deploy/workspace_setup.sql`, so your own API gets the same browser-only deploy: connect the repo to a Workspace, **Run All**, then create the Streamlit app from the repo — no local tooling required.
 
-See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for a facilitated run-of-show and [`docs/DYNAMICS_WALKTHROUGH.md`](docs/DYNAMICS_WALKTHROUGH.md) for a full extract→deploy walkthrough on the Dynamics OData sample.
+See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for a facilitated run-of-show.
 
 ## Repository layout
 
 ```
-docs/                      CONTRACT.md (the schema_spec contract), WORKSHOP.md, DYNAMICS_WALKTHROUGH.md
+docs/                      CONTRACT.md (the schema_spec contract), WORKSHOP.md
 AGENTS.md                  workspace instructions Cortex Code auto-loads every conversation
 .snowflake/cortex/skills/  the three Cortex Code skills (+ references/) — where Snowsight discovers them
 templates/                 schema_spec.schema.json, generator/generate_seed.py, render.py, app/* (RAG app)
-examples/                  hris_people/ and dynamics_erp/ — worked examples. Committed: spec, KB,
-                           app/ (for CREATE STREAMLIT), deploy/workspace_setup.sql (the Run-All deploy).
-                           Git-ignored/regenerated: seed/ CSVs + the numbered CLI SQL + run.sh
+examples/hris_people/      the worked example — a hand-built LIVE app:
+                           deployed_app/app/     the Streamlit monolith
+                           deployed_app/src/     setup SQL + Bronze→Silver→Gold ELT + semantic view
+                           deployed_app/mock_api/ the live Extract source (FastAPI)
+                           deployed_app/docs/    the RAG corpus (markdown)
+                           schema_spec.json / kb_content.json kept as lineage only.
 tools/                     validate_spec.py, lint_skill.py (static checks)
 ```
 

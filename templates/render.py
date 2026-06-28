@@ -302,7 +302,7 @@ def render_streamlit_hint(spec: dict) -> str:
 -- Prereq: connect this repo to your Workspace, then reference it as a Git
 -- repository object. Fill in <GIT_REPO> (the repository name) and <BRANCH>,
 -- and <PATH_TO_APP> (this example's app/ folder, relative to the repo root,
--- e.g. examples/hris_people/app).
+-- e.g. examples/<your_example>/app).
 -- ─────────────────────────────────────────────────────────────────────────
 -- ALTER GIT REPOSITORY {fq}.<GIT_REPO> FETCH;
 -- CREATE OR REPLACE STREAMLIT {fq}.{name}

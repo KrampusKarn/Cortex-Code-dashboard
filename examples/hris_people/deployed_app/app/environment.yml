@@ -3,7 +3,5 @@ channels:
   - snowflake
 dependencies:
   - python=3.11.*
-  - streamlit
-  - snowflake-snowpark-python
-  - pandas
-  - altair
+  - snowflake-snowpark-python=
+  - streamlit=

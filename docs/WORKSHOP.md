@@ -32,13 +32,13 @@ By the end, participants can:
 
 ## Live build (facilitator script, ~35 min)
 
-Paste a small sample HR API response — e.g. an `employees` endpoint payload with a nested array, grabbed from a public API's docs (Freshteam, BambooHR, etc.) — as the "API response" and narrate each skill:
+Paste a small sample HR API response — e.g. an `employees` endpoint payload with a nested array, grabbed from a public API's docs (OmniHR, BambooHR, etc.) — as the "API response" and narrate each skill:
 
 1. **Extract** — invoke `api-schema-extraction` on that sample. Show how the response array becomes the `EMPLOYEES` table, nested arrays become child tables, and how it always adds the knowledge-base + chat tables. Validate: `python3 tools/validate_spec.py …`.
 2. **Generate** — invoke `demo-data-generator`. Show the printed row counts; open a CSV; emphasize determinism (`--seed`) and currency (`--today` / relative date tokens).
 3. **Scaffold** — invoke `dashboard-rag-scaffold`. For a browser-only audience: connect the repo to a Workspace, **Run All** on `deploy/workspace_setup.sql`, then create the Streamlit app *from repository*. (CLI alternative: render → `run.sh <conn>`, noting the **row-count assertion**, → `snow streamlit deploy`.) Open the app; ask the Assistant a question; show the **Sources** citations and that the current month has data.
 
-(If time is short, deploy the prebuilt `examples/hris_people` instead of building from a sample.)
+(If time is short, pre-render an example ahead of the session and deploy that instead of building from a sample.)
 
 ## Lab (participants, ~70 min)
 
@@ -65,5 +65,5 @@ Facilitators float and unblock. The pitfalls table below covers ~90% of issues.
 - [ ] Participants completed pre-flight (connection test + CORTEX_USER grant).
 - [ ] Repo cloned; `pip install -r requirements.txt` done.
 - [ ] A shared warehouse/database naming convention agreed (so people don't collide).
-- [ ] Prebuilt `examples/hris_people` deployed as a fallback demo.
+- [ ] A pre-rendered example deployed as a fallback demo.
 - [ ] Time-boxed the lab; kept the last 10 minutes for the production re-pointing story.

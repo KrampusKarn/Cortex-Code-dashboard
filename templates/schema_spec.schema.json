@@ -18,7 +18,7 @@
       "required": ["name"],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string", "description": "e.g. 'Freshteam', 'Microsoft Dynamics 365'." },
+        "name": { "type": "string", "description": "e.g. 'OmniHR', 'Harvest'." },
         "base_url": { "type": "string" },
         "docs_url": { "type": "string" },
         "auth": {

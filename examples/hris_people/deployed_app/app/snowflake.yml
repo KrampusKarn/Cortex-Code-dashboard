@@ -3,15 +3,12 @@ entities:
   dashboard_app:
     type: streamlit
     identifier:
-      name: EMPLOYEE_360
+      name: YFE09SNXUSHHL2EH
       schema: PUBLIC
       database: DEMO_EMPLOYEE_APP
-    title: "Employee 360"
-    query_warehouse: DEMO_WH
+    title: "DASHBOARD_SPS"
+    query_warehouse: DEMO_EMPLOYEE_APP
     main_file: streamlit_app.py
     artifacts:
       - streamlit_app.py
-      - _core.py
-      - rag_chat.py
-      - app_config.py
       - environment.yml
