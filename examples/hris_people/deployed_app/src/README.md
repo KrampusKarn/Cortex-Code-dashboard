@@ -16,7 +16,7 @@ from the mock API, which needs an external-access integration).
 | 1 | `00_setup.sql` | Warehouses, database, schema, stages, and the base tables (empty), incl. the chat + document tables. |
 | 2 | `03_silver.sql` | The **Silver** schema + typed entity tables (the read source for Gold). |
 | 3 | **Populate Silver — pick A or B** | |
-| 3·A | `seeders/seed_omnihr.sh` + `seed_harvest.sh` (`--schema SILVER --reset`) | **Direct load** — synthetic OmniHR + Harvest data straight into Silver. No external access; works on trial accounts. See [`seeders/README.md`](seeders/README.md). |
+| 3·A | `seeders/seed_omnihr.sh` + `seed_harvest.sh` (`--connection <conn> --schema SILVER --reset`) | **Direct load** — synthetic OmniHR + Harvest data straight into Silver. No external access; works on trial accounts. See [`seeders/README.md`](seeders/README.md). |
 | 3·B | `02_bronze.sql` → ingest → `CALL SILVER.SP_BUILD_SILVER()` | **Medallion ELT** — extract the mock API into Bronze VARIANT, then flatten into Silver. Start the API with `../mock_api/serve_eai.sh start` (see [`mock_api/README.md`](../mock_api/README.md)). |
 | 4 | `04_gold.sql` | **Gold** — 1:1 pass-through views over Silver + curated analytics views (incl. `EMPLOYEE_360`, the canonical employee dimension). The app's `SCH="GOLD"` resolves every tab here. |
 | 5 | `05_semantic_analyst.sql` | **`GOLD.HR_ANALYST` semantic view** — the Cortex Analyst model behind the "Ask Your Data" tab (people / time / projects / leave / recruiting). |

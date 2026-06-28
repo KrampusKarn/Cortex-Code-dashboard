@@ -18,7 +18,7 @@ The dashboard reads the **`GOLD`** schema, which is built from **`SILVER`**. To 
 dashboard with the seeders (no mock API or external-access integration needed), target Silver:
 
 ```bash
-./seed_all.sh --schema SILVER --reset
+./seed_all.sh --connection <your-connection> --schema SILVER --reset
 ```
 
 Prereq: run `../00_setup.sql` (database, warehouses) and `../03_silver.sql` (creates the Silver
@@ -43,15 +43,18 @@ schema + typed tables) first. The `--schema PUBLIC` default targets the flat bas
 ```bash
 cd examples/hris_people/deployed_app/src/seeders
 
+# always pass --connection (the scripts have no default — it resolves from your
+# local ~/.snowflake/connections.toml):
+
 # preview first — generates the SQL, executes nothing:
-./seed_all.sh --dry-run
+./seed_all.sh --connection <your-connection> --dry-run
 
 # full coherent rebuild of the live demo data (truncate + reseed, one confirmation):
-./seed_all.sh --reset
+./seed_all.sh --connection <your-connection> --reset
 
 # or one source at a time (OmniHR must run before Harvest):
-./seed_omnihr.sh --reset
-./seed_harvest.sh --reset
+./seed_omnihr.sh  --connection <your-connection> --reset
+./seed_harvest.sh --connection <your-connection> --reset
 ```
 
 Prereq: run `../00_setup.sql` once so the base tables exist.
