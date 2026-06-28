@@ -72,9 +72,9 @@ The app and both assistants deploy straight from the public repo
 aren't available in your region, run `ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';`.
 Run all SQL as `ACCOUNTADMIN`; every script is idempotent.
 
-### Path A — DEMO account + mock API (medallion ELT)
+### Path A — Snowflake account + mock API (medallion ELT)
 
-Connection `sevenpeaks_partner_demo`. Demonstrates the live Extract → Bronze → Silver → Gold flow.
+Connection `<your snowflake account>`. Demonstrates the live Extract → Bronze → Silver → Gold flow.
 
 1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables.
 2. Start the API + tunnel: `cd mock_api && ./serve_eai.sh start` (ngrok static domain; add
@@ -88,7 +88,7 @@ Connection `sevenpeaks_partner_demo`. Demonstrates the live Extract → Bronze �
 
 ### Path B — trial account + seeders (direct load)
 
-Connection `7ptrial`. Trial accounts can't use external-access integrations, so skip the mock API
+Connection `<your trial Snowflake account>`. Trial accounts can't use external-access integrations, so skip the mock API
 and Bronze entirely and seed Silver directly.
 
 1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables.
