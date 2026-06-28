@@ -7,8 +7,7 @@ tables — one seeder per data source so they don't get mixed up:
 |---|---|---|---|
 | `seed_omnihr.sh` | **OmniHR** (`Omni API v1`) | 18 — employees, org, recruitment, leave | OmniHR field semantics: `employment_status`, `marital_status`, 198 nationalities, time-off types, ATS sources, job `event_reason` |
 | `seed_harvest.sh` | **Harvest** (v2) | 15 — clients, projects, time, billing | billable flags, hourly/cost rates, weekly capacity, utilization |
-| `seed_lattice.sh` | **Lattice** | 2 — performance reviews, HR notes | rating 1–5, sentiment + score in `[-1,1]` |
-| `seed_all.sh` | all three | 35 | runs them in FK-safe order |
+| `seed_all.sh` | both | 33 | runs them in FK-safe order |
 
 The 5 **app-managed** tables are never seeded: `CHAT_SESSIONS`, `CHAT_MESSAGES`,
 `DOCUMENT_CHUNKS`, `DOC_INGEST_LOG`, `COMPANY_KNOWLEDGE_BASE`.
@@ -16,13 +15,10 @@ The 5 **app-managed** tables are never seeded: `CHAT_SESSIONS`, `CHAT_MESSAGES`,
 ## Where it loads
 
 The dashboard reads the **`GOLD`** schema, which is built from **`SILVER`**. To populate the
-dashboard with the seeders (no mock API or external-access integration needed), target Silver —
-OmniHR + Harvest only (Lattice is not part of the OmniHR/Harvest medallion, so it has no Silver
-tables):
+dashboard with the seeders (no mock API or external-access integration needed), target Silver:
 
 ```bash
-./seed_omnihr.sh  --schema SILVER --reset
-./seed_harvest.sh --schema SILVER --reset
+./seed_all.sh --schema SILVER --reset
 ```
 
 Prereq: run `../00_setup.sql` (database, warehouses) and `../03_silver.sql` (creates the Silver
@@ -36,8 +32,8 @@ schema + typed tables) first. The `--schema PUBLIC` default targets the flat bas
   schema changes — no table/column list is hardcoded in the engine.
 - **FK-coherent:** foreign keys are inferred from column names (+ an alias map) and drawn from
   **real parent rows**. Cross-source parents (e.g. `TIME_ENTRIES.EMPLOYEE_ID → EMPLOYEES`) are
-  read live from the DB, which is why **order matters**: OmniHR → Harvest → Lattice.
-- **API-realistic:** the maintained artifacts are the three `profiles_*.json` files — they map
+  read live from the DB, which is why **order matters**: OmniHR → Harvest.
+- **API-realistic:** the maintained artifacts are the two `profiles_*.json` files — they map
   `TABLE.COLUMN` to a generator (`choice`/`enumerate`/`int`/`float`/`date`/`bool`/`template`/`faker`)
   with values drawn from each API's real fields/enums. Update a profile when an API changes; the
   engine and scripts stay untouched.
@@ -53,13 +49,12 @@ cd examples/hris_people/deployed_app/src/seeders
 # full coherent rebuild of the live demo data (truncate + reseed, one confirmation):
 ./seed_all.sh --reset
 
-# or one source at a time (OmniHR must run before Harvest/Lattice):
+# or one source at a time (OmniHR must run before Harvest):
 ./seed_omnihr.sh --reset
 ./seed_harvest.sh --reset
-./seed_lattice.sh --reset
 ```
 
-Prereq: run `../00_setup.sql` once so all 40 tables exist (incl. the `OMNI_EMPLOYEE_ID` column).
+Prereq: run `../00_setup.sql` once so the base tables exist.
 
 ## Flags
 

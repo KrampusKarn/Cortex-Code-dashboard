@@ -4,7 +4,7 @@
 Unlike the kit's spec-driven templates/generator/generate_seed.py, this reads the
 ACTUAL live table structure from Snowflake (INFORMATION_SCHEMA + SHOW PRIMARY KEYS),
 so it adapts automatically as the schema changes. It is invoked once per data
-source (OmniHR / Harvest / Lattice) with that source's table list + a column
+source (OmniHR / Harvest) with that source's table list + a column
 "profile" that encodes API-realistic values. Output is a .sql file of
 INSERT statements (run by the per-source bash wrapper via `snow sql -f`); this
 module never writes to Snowflake itself, only reads (introspection + parent keys).

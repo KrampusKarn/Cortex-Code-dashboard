@@ -1,7 +1,7 @@
 {
   "spec_version": "1.0",
   "source": {
-    "name": "OmniHR + Harvest + Lattice",
+    "name": "OmniHR + Harvest",
     "docs_url": "https://api.omnihr.co/api/v1",
     "auth": "bearer"
   },
@@ -51,7 +51,6 @@
         { "name": "TERMINATION_DATE", "type": "DATE", "gen": "date", "min": "-12m", "max": "today", "null_pct": 0.88, "api_field": "termination_date" },
         { "name": "MANAGER_ID", "type": "NUMBER", "gen": "int", "min": 1, "max": 10, "api_field": "reporting_manager.system_id" },
         { "name": "BUSINESS_UNIT_ID", "type": "NUMBER", "gen": "fk", "ref_table": "BUSINESS_UNITS" },
-        { "name": "LATTICE_ID", "type": "VARCHAR(64)", "gen": "template", "template": "lat_{EMPLOYEE_ID}" },
         { "name": "OMNI_EMPLOYEE_ID", "type": "VARCHAR(64)", "gen": "template", "template": "omni_{EMPLOYEE_ID}", "api_field": "system_id" }
       ]
     },
@@ -127,22 +126,6 @@
         { "name": "HOURS", "type": "FLOAT", "gen": "float", "min": 1.0, "max": 8.0, "round": 1, "api_field": "hours" },
         { "name": "IS_BILLABLE", "type": "BOOLEAN", "gen": "bool", "p_true": 0.78, "api_field": "billable" },
         { "name": "NOTES", "type": "VARCHAR", "gen": "faker", "faker_provider": "sentence", "api_field": "notes" }
-      ]
-    },
-    {
-      "name": "PERFORMANCE_REVIEWS", "grain": "one row per review",
-      "endpoint": "GET /v1/feedback (Lattice)", "row_count": 120,
-      "columns": [
-        { "name": "REVIEW_ID", "type": "NUMBER", "pk": true, "gen": "row_index" },
-        { "name": "EMPLOYEE_ID", "type": "NUMBER", "gen": "fk", "ref_table": "EMPLOYEES", "api_field": "reviewee_id" },
-        { "name": "REVIEW_DATE", "type": "DATE", "gen": "date", "min": "-18m", "max": "today", "api_field": "created_at" },
-        { "name": "REVIEW_PERIOD", "type": "VARCHAR(20)", "gen": "choice", "choices": ["H1 2025", "H2 2025", "H1 2026"] },
-        { "name": "RATING", "type": "FLOAT", "gen": "choice", "choices": [2.5, 3.0, 3.5, 4.0, 4.5, 5.0], "weights": [0.05, 0.15, 0.3, 0.3, 0.15, 0.05] },
-        { "name": "SENTIMENT", "type": "VARCHAR(20)", "gen": "choice", "choices": ["Positive", "Neutral", "Negative"], "weights": [0.5, 0.38, 0.12] },
-        { "name": "SENTIMENT_SCORE", "type": "FLOAT", "gen": "float", "min": -0.6, "max": 0.9, "round": 2, "comment": "in production: SNOWFLAKE.CORTEX.SENTIMENT(written_feedback)" },
-        { "name": "GOALS_MET", "type": "NUMBER", "gen": "int", "min": 2, "max": 8 },
-        { "name": "GOALS_TOTAL", "type": "NUMBER", "gen": "int", "min": 6, "max": 8 },
-        { "name": "MANAGER_COMMENTS", "type": "VARCHAR", "gen": "faker", "faker_provider": "paragraph", "api_field": "written_feedback" }
       ]
     },
     {

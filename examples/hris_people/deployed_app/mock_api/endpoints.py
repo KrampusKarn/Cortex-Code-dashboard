@@ -97,7 +97,6 @@ def _employee(row: dict) -> dict:
         "business_unit_id": row.get("BUSINESS_UNIT_ID"),
         "sub_department_id": row.get("SUB_DEPT_ID"),
         "team_id": row.get("TEAM_ID"),
-        "lattice_id": row.get("LATTICE_ID"),
     }
 
 

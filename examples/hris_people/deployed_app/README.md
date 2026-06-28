@@ -94,7 +94,7 @@ and Bronze entirely and seed Silver directly.
 1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables.
 2. `src/03_silver.sql` — creates the Silver schema + typed tables (its flatten procedure is unused here).
 3. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
-4. Seed Silver directly (OmniHR + Harvest — Lattice is not part of the medallion):
+4. Seed Silver directly (OmniHR + Harvest):
    ```bash
    cd src/seeders
    ./seed_omnihr.sh  --connection 7ptrial --schema SILVER --reset

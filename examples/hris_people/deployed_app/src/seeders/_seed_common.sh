@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Shared logic for the per-source seeders. NOT run directly — sourced by
-# seed_omnihr.sh / seed_harvest.sh / seed_lattice.sh, which set SOURCE/PROFILE/TABLES
+# seed_omnihr.sh / seed_harvest.sh, which set SOURCE/PROFILE/TABLES
 # and then call `run_seed`.
 #
 # Reads the live table structure, generates API-realistic FK-coherent rows for ONE

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Seed the OmniHR-sourced tables (HR / org / recruitment / leave) for DASHBOARD_SPS.
-# Run this FIRST — Harvest and Lattice tables reference EMPLOYEES, which this creates.
+# Run this FIRST — Harvest tables reference EMPLOYEES, which this creates.
 #   ./seed_omnihr.sh [--reset] [--dry-run] [--connection C] [--rows N]
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_seed_common.sh"

@@ -31,7 +31,7 @@ The contract that ties them together — `schema_spec.json` — is documented in
 
 | Example | Source shape | What it shows |
 |---|---|---|
-| [`examples/hris_people`](examples/hris_people) | OmniHR / Harvest / Lattice (HR) | A **hand-built live app** (not templated output). Its deployable form is [`deployed_app/`](examples/hris_people/deployed_app) — 14 dashboard tabs + a document-ingestion RAG chat, deployed to `DEMO_EMPLOYEE_APP`. The kept `schema_spec.json` / `kb_content.json` are lineage only. |
+| [`examples/hris_people`](examples/hris_people) | OmniHR / Harvest (HR) | A **hand-built live app** (not templated output). Its deployable form is [`deployed_app/`](examples/hris_people/deployed_app) — 14 dashboard tabs + a document-ingestion RAG chat, deployed to `DEMO_EMPLOYEE_APP`. The kept `schema_spec.json` / `kb_content.json` are lineage only. |
 
 > The **templated** pipeline (extract → generate → scaffold) runs against *your own* API via the
 > three skills — see [**Build a dashboard for your API**](#build-a-dashboard-for-your-api) below.

@@ -12,8 +12,6 @@
 --      see the note at the bottom).
 --
 -- OmniHR + Harvest entities come from SILVER (flattened from the API via Bronze).
--- Lattice performance data (PERFORMANCE_REVIEWS, EMPLOYEE_NOTES) is NOT part of the
--- OmniHR/Harvest medallion, so it is not exposed in GOLD (any earlier views are dropped below).
 --
 -- Run as ACCOUNTADMIN (after SILVER is built, or the SILVER-backed views return 0
 -- rows until then).
@@ -21,10 +19,6 @@
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DEMO_EMPLOYEE_APP;
 CREATE SCHEMA IF NOT EXISTS GOLD;
-
--- Drop any Lattice pass-throughs from earlier builds — the demo is OmniHR + Harvest only.
-DROP VIEW IF EXISTS GOLD.PERFORMANCE_REVIEWS;
-DROP VIEW IF EXISTS GOLD.EMPLOYEE_NOTES;
 
 -- ── Entity pass-throughs (24 from SILVER) ────────────────────────────
 -- 1:1 over the typed SILVER tables so GOLD is a complete read surface for the app.
@@ -52,11 +46,6 @@ CREATE OR REPLACE VIEW GOLD.USER_ASSIGNMENTS             AS SELECT * FROM SILVER
 CREATE OR REPLACE VIEW GOLD.TIME_ENTRIES                 AS SELECT * FROM SILVER.TIME_ENTRIES;
 CREATE OR REPLACE VIEW GOLD.EXPENSE_ENTRIES              AS SELECT * FROM SILVER.EXPENSE_ENTRIES;
 CREATE OR REPLACE VIEW GOLD.UTILIZATION                  AS SELECT * FROM SILVER.UTILIZATION;
-
--- Note: the demo is OmniHR + Harvest only. The Lattice performance source
--- (PERFORMANCE_REVIEWS / EMPLOYEE_NOTES) is intentionally NOT surfaced in GOLD or the
--- dashboard — there is no Lattice API in the medallion, so everything the app shows
--- flows through Bronze → Silver from the two APIs.
 
 -- ── Curated analytics views ──────────────────────────────────────────
 -- Cross-entity rollups. The app can read these directly; they are also the basis

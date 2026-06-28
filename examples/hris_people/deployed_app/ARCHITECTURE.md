@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Employee 360 Dashboard is a comprehensive Streamlit application built on Snowflake that serves as a one-stop executive dashboard for the People Department and Operations team. It integrates data modeled after **OmniHR** (HR — `Omni API v1`) and **Harvest** (Project Delivery), plus a custom RAG-powered Company Knowledge Assistant. (Lattice performance/sentiment was retired from the demo — the dashboard now reflects the two API sources that flow through the medallion.)
+The Employee 360 Dashboard is a comprehensive Streamlit application built on Snowflake that serves as a one-stop executive dashboard for the People Department and Operations team. It integrates data modeled after **OmniHR** (HR — `Omni API v1`) and **Harvest** (Project Delivery), plus a custom RAG-powered Company Knowledge Assistant.
 
 > **OmniHR replaces Freshteam** (which is being shut down) as the HR source — see "Porting to Production" below.
 
@@ -15,7 +15,7 @@ Cortex Search service stay in `PUBLIC`. The read schema is the single `SCH` cons
 "Porting to Production" below, so the app can be lifted to prod and re-pointed at real
 API-sourced tables by editing those constants.
 
-> **Authoritative structure:** the 40 live tables are defined in [`src/00_setup.sql`](src/00_setup.sql); synthetic data is loaded per source by [`src/seeders/`](src/seeders/) (OmniHR / Harvest / Lattice). The table inventory below is illustrative and may lag the live schema.
+> **Authoritative structure:** the live tables are defined in [`src/00_setup.sql`](src/00_setup.sql); synthetic data is loaded per source by [`src/seeders/`](src/seeders/) (OmniHR / Harvest). The table inventory below is illustrative and may lag the live schema.
 
 ---
 
@@ -42,7 +42,7 @@ source), **docs** (RAG corpus):
 | `src/00_setup.sql` | From-scratch infra + all 40 tables |
 | `src/01_document_ingestion.sql` | RAG chat backend (`COMPANY_KB_SEARCH` over `DOCUMENT_CHUNKS`) |
 | `src/02_bronze.sql` … `05_semantic_analyst.sql` | Bronze→Silver→Gold ELT + the `GOLD.HR_ANALYST` semantic view |
-| `src/seeders/` | Per-source synthetic-data seeders (OmniHR / Harvest / Lattice) |
+| `src/seeders/` | Per-source synthetic-data seeders (OmniHR / Harvest) |
 | `src/migrations/` | One-off schema migrations |
 | `mock_api/` | FastAPI replica of the OmniHR + Harvest APIs — the live Extract source |
 | `docs/*.md` | The RAG corpus (health benefits, PTO, upcoming events) |
@@ -62,12 +62,11 @@ Database: `DEMO_EMPLOYEE_APP`, Schema: `PUBLIC`
 
 | Table | Purpose | Rows |
 |---|---|---|
-| `EMPLOYEES` | Core employee records (with termination, BU/dept/team FKs, Lattice/OmniHR ID mapping) | 50 |
+| `EMPLOYEES` | Core employee records (with termination, BU/dept/team FKs, OmniHR ID mapping) | 50 |
 | `EMPLOYEE_FIELDS` | Extended HR fields (DOB, emergency contact, employment type) | 50 |
 | `EMPLOYEE_PII` | Sensitive PII for HR (SSN, passport, visa, bank, insurance, EEO, benefits) | 50 |
 | `EMPLOYEE_COMPENSATION_DETAILS` | Salary details, stock options, 401k, PIP status, leave balances | 50 |
 | `EMPLOYEE_CERTIFICATIONS` | Professional certifications with expiry tracking | 42 |
-| `EMPLOYEE_NOTES` | HR notes, manager feedback, ops flags (with priority/visibility) | 20 |
 | `EMPLOYEES_HISTORY` | Employment change timeline (hires, promotions, transfers, terminations) | 73 |
 | `SALARY` | Salary history (effective dates) | 86 |
 | `DEPARTMENTS_DETAIL` | Department metadata | 5 |
@@ -111,12 +110,6 @@ Database: `DEMO_EMPLOYEE_APP`, Schema: `PUBLIC`
 | `INVOICES` | Client invoices | 14 |
 | `INVOICE_LINE_ITEMS` | Invoice line detail | 14 |
 | `ESTIMATES` | Estimate/proposal tracking | 10 |
-
-### Performance (Lattice-aligned)
-
-| Table | Purpose | Rows |
-|---|---|---|
-| `PERFORMANCE_REVIEWS` | Review cycles with rating, sentiment, goals | 158 |
 
 ### RAG Knowledge Base
 
@@ -199,7 +192,6 @@ people / time / projects / leave / recruiting) is built by [`src/05_semantic_ana
     - Actual vs Planned Headcount trend
     - Joiners vs Leavers chart
     - Attrition - FTE (Quarterly)
-    - Sentiment (YTD + monthly trend)
     - Internal Training % of Total Hours
     - **Filters**: Multi-select BU, Multi-select Department, Year
 
@@ -220,7 +212,7 @@ people / time / projects / leave / recruiting) is built by [`src/05_semantic_ana
 
 ---
 
-## Porting to Production (OmniHR / Harvest / Lattice)
+## Porting to Production (OmniHR / Harvest)
 
 ### Strategy: View Layer Indirection
 
@@ -268,8 +260,6 @@ Then point the dashboard code (change the `DB`/`SCH` constants at the top of `st
 | `ESTIMATES` | Harvest `/v2/estimates` |
 | `HARVEST_USERS`, `USER_ASSIGNMENTS` | Harvest `/v2/users`, `/v2/user_assignments` |
 | `UTILIZATION` | Harvest `/v2/reports/time` aggregated monthly |
-| `PERFORMANCE_REVIEWS` | Lattice `SRC_REVIEWCYCLES` + `SRC_FEEDBACKS` (run `SNOWFLAKE.CORTEX.SENTIMENT(content)` to derive sentiment) |
-| `EMPLOYEE_NOTES` | Lattice `SRC_FEEDBACKS` (filtered by type) |
 | `COMPANY_KNOWLEDGE_BASE` | Keep as-is or source from internal wiki/Confluence export |
 | `LEAVE_REQUESTS` | OmniHR `GET /time-off/1.0/time-off-requests/` |
 | `HEADCOUNT_PLAN` | Internal planning table (populate from HR plan) |
@@ -281,8 +271,7 @@ Then point the dashboard code (change the `DB`/`SCH` constants at the top of `st
 3. Update the `DB`/`SCH` constants at the top of `streamlit_app.py` to point at the view schema, then `snow streamlit deploy --replace`
 4. Create the `COMPANY_KB_SEARCH` Cortex Search service on your real knowledge-base content (or keep the document-ingestion pipeline in `src/01_document_ingestion.sql`)
 5. Create the `CHAT_SESSIONS` and `CHAT_MESSAGES` tables for chat persistence (in `src/00_setup.sql`)
-6. Replace mock sentiment with `SNOWFLAKE.CORTEX.SENTIMENT()` against Lattice feedback content
-7. Grant access to the Streamlit app to target users
+6. Grant access to the Streamlit app to target users
 
 ---
 

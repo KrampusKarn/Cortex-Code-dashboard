@@ -46,7 +46,6 @@
     "EMPLOYEES.MANAGER_ID": { "null_pct": 0.12 },
     "EMPLOYEES.SUB_DEPT_ID": { "null_pct": 0.05 },
     "EMPLOYEES.TEAM_ID": { "null_pct": 0.05 },
-    "EMPLOYEES.LATTICE_ID": { "gen": "template", "template": "lat_{EMPLOYEE_ID}" },
     "EMPLOYEES.OMNI_EMPLOYEE_ID": { "gen": "template", "template": "omni_{EMPLOYEE_ID}" },
 
     "EMPLOYEE_FIELDS.EMPLOYMENT_TYPE": { "gen": "choice", "choices": ["Full-time", "Part-time", "Contractor", "Intern"], "weights": [0.8, 0.05, 0.12, 0.03] },
