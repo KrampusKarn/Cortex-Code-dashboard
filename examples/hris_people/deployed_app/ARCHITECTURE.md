@@ -140,22 +140,21 @@ Database: `DEMO_EMPLOYEE_APP`, Schema: `PUBLIC`
 - Embeddings model: `snowflake-arctic-embed-m-v1.5`
 - Indexed column: `CONTENT`
 - Attributes: `TITLE`, `CATEGORY`, `FILE_NAME`
-- Source: `DOCUMENT_CHUNKS` (parsed/chunked from documents dropped in the `COMPANY_DOCS` stage — see [`src/01_document_ingestion.sql`](src/01_document_ingestion.sql)). The curated `COMPANY_KNOWLEDGE_BASE` table is no longer indexed (kept for lineage).
+- Source: `DOCUMENT_CHUNKS` (parsed/chunked from documents dropped in the `COMPANY_DOCS` stage — see [`src/01_document_ingestion.sql`](src/01_document_ingestion.sql)).
 - Target lag: 1 minute
 
 Used by the RAG Company Knowledge Assistant in the Overview tab to retrieve top-K relevant documents, then grounded into an answer via `SNOWFLAKE.CORTEX.COMPLETE(mistral-large2, ...)`.
 
 ---
 
-## Stored Procedures (historical)
+## Stored procedures
 
-> **Historical note.** An earlier deploy model assembled the app from a stored procedure
-> (`DEPLOY_DASHBOARD()`) that concatenated per-section files into `streamlit_app.py`. That model is
-> gone: the app is now the single committed `app/streamlit_app.py` monolith, deployed with
-> `snow streamlit deploy` / `deploy_app.sql`. Today's backend comes entirely from `src/` —
-> [`00_setup.sql`](src/00_setup.sql) (tables), [`01_document_ingestion.sql`](src/01_document_ingestion.sql)
-> (chat), the `02`→`05` medallion, and [`src/seeders/`](src/seeders/) (synthetic data). The only
-> stored procedure in the live account is `SP_REBUILD_DOC_CHUNKS` (document ingestion).
+The backend comes entirely from `src/`: [`00_setup.sql`](src/00_setup.sql) (tables),
+[`01_document_ingestion.sql`](src/01_document_ingestion.sql) (the chat backend), the `02`→`05`
+medallion, and [`src/seeders/`](src/seeders/) (synthetic data). The app is the single committed
+`app/streamlit_app.py` monolith, deployed with `snow streamlit deploy` or
+[`src/deploy_app.sql`](src/deploy_app.sql). The one stored procedure the running app depends on is
+`SP_REBUILD_DOC_CHUNKS` (document ingestion).
 
 ---
 

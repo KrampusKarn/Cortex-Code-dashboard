@@ -13,7 +13,7 @@
 --
 -- OmniHR + Harvest entities come from SILVER (flattened from the API via Bronze).
 -- Lattice performance data (PERFORMANCE_REVIEWS, EMPLOYEE_NOTES) is NOT part of the
--- OmniHR/Harvest API medallion, so those two pass through from PUBLIC.
+-- OmniHR/Harvest medallion, so it is not exposed in GOLD (any earlier views are dropped below).
 --
 -- Run as ACCOUNTADMIN (after SILVER is built, or the SILVER-backed views return 0
 -- rows until then).

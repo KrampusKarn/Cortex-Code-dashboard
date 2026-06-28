@@ -1,7 +1,7 @@
 # `seeders/` — per-source synthetic data for DASHBOARD_SPS
 
-Structure-driven, FK-coherent, **API-realistic** synthetic data for the live
-`DEMO_EMPLOYEE_APP.PUBLIC` schema — one seeder per data source so they don't get mixed up:
+Structure-driven, FK-coherent, **API-realistic** synthetic data for the DASHBOARD_SPS entity
+tables — one seeder per data source so they don't get mixed up:
 
 | Seeder | Source | Tables | Realistic of |
 |---|---|---|---|
@@ -12,6 +12,22 @@ Structure-driven, FK-coherent, **API-realistic** synthetic data for the live
 
 The 5 **app-managed** tables are never seeded: `CHAT_SESSIONS`, `CHAT_MESSAGES`,
 `DOCUMENT_CHUNKS`, `DOC_INGEST_LOG`, `COMPANY_KNOWLEDGE_BASE`.
+
+## Where it loads
+
+The dashboard reads the **`GOLD`** schema, which is built from **`SILVER`**. To populate the
+dashboard with the seeders (no mock API or external-access integration needed), target Silver —
+OmniHR + Harvest only (Lattice is not part of the OmniHR/Harvest medallion, so it has no Silver
+tables):
+
+```bash
+./seed_omnihr.sh  --schema SILVER --reset
+./seed_harvest.sh --schema SILVER --reset
+```
+
+Prereq: run `../00_setup.sql` (database, warehouses) and `../03_silver.sql` (creates the Silver
+schema + typed tables) first. The `--schema PUBLIC` default targets the flat base tables from
+`00_setup.sql` instead.
 
 ## How it works
 
