@@ -27,15 +27,19 @@ Four concerns, four folders:
 
 ## Data model
 
-The dashboard reads one schema: **`GOLD`**. Gold is 1:1 pass-through views over **`SILVER`** plus
-curated analytics views (headcount, utilization, `EMPLOYEE_360`, …). Silver is the typed, flattened
-entity layer; Bronze is the raw VARIANT landing. Silver gets populated two ways — both converge on
-the same tables, so Gold and the dashboard look identical either way:
+Entity data lives entirely in the **medallion** (`BRONZE` → `SILVER` → `GOLD`). The dashboard reads
+one schema, **`GOLD`** (1:1 pass-through views over `SILVER` plus curated analytics views like
+`EMPLOYEE_360`); `SILVER` is the typed, flattened layer; `BRONZE` is the raw VARIANT landing.
+**`PUBLIC` holds only the app + RAG objects** (chat tables, documents, Cortex Search, the app) — no
+entity data.
 
-- **Medallion ELT (mock API):** `mock_api/` serves OmniHR + Harvest JSON over an HTTPS tunnel;
-  Snowflake extracts it into Bronze, then `SP_BUILD_SILVER` flattens it into Silver.
-- **Seeders (direct load):** `src/seeders/` writes the same synthetic, FK-coherent data straight
-  into the tables — no API or external-access integration needed.
+`BRONZE` is filled two ways — both then run the **same** `SP_BUILD_SILVER` → Gold, so the dashboard
+is identical either way:
+
+- **Live API ingest (DEMO):** `mock_api/` serves OmniHR + Harvest JSON over an HTTPS tunnel;
+  `SP_INGEST_ALL_BRONZE` pulls it into Bronze.
+- **Offline seeder (trial / no EAI):** `src/seeders/seed_bronze.sh` generates the same JSON and
+  loads it straight into Bronze — no API or external-access integration needed.
 
 ## Knowledge base — the Documents assistant
 

@@ -15,12 +15,12 @@ Bronze → Silver → Gold ELT demo (step 4 of the E2E analytics story).
 
 | Path | Audience | What it does |
 |---|---|---|
-| **Seeders** (`../src/seeders/`) | Anyone cloning the repo | Write synthetic rows **straight into Snowflake** (the "clone & populate" path) |
-| **This mock API** | The live demo | Serve the same data as a **real HTTP API** so Snowflake can *extract* it live |
+| **Seeder** (`../src/seeders/seed_bronze.sh`) | Trial / any account (no EAI) | Loads the same JSON **straight into `BRONZE.*`** (no tunnel), then `SP_BUILD_SILVER` flattens it |
+| **This mock API** | The live (DEMO) demo | Serves the same data as a **real HTTP API** so Snowflake can *extract* it into Bronze live |
 
 Both read the **same data brain** — the seeder profiles (`profiles_omnihr.json`,
-`profiles_harvest.json`) and the same engine (`_seedlib.build_rows`). One source of
-truth: what the seeders load and what this API serves can never drift.
+`profiles_harvest.json`) and the same engine (`_seedlib.build_rows`) — and produce the **same Bronze**,
+so what the seeder loads and what this API serves can never drift.
 
 ## Quick start
 
