@@ -24,8 +24,11 @@ import sys
 from datetime import date
 from pathlib import Path
 
+# Reuse the mock API's data engine + serializers (they live in ../../mock_api) so the
+# Bronze JSON is byte-identical to what the live API ingest produces.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "mock_api"))
 import dataset                                  # builds the FK-coherent graph (reuses _seedlib)
-from endpoints import endpoint_specs           # the SAME serializers the API serves
+from endpoints import endpoint_specs           # the SAME serializers the mock API serves
 
 DB_DEFAULT = "DEMO_EMPLOYEE_APP"
 BATCH = 500                                     # rows per INSERT, mirrors the seeder's batching

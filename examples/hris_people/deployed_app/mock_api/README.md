@@ -95,8 +95,11 @@ tokens so the data always covers the current period — pin with `MOCK_TODAY=202
 | `dataset.py` | Merges the seeder profiles + calls `_seedlib.build_rows` → in-memory graph |
 | `schema.py` | Parses `../src/00_setup.sql` → table structures (so no Snowflake connection is needed) |
 | `endpoints.py` | Path map (OmniHR `/api/v1/…`, Harvest `/v2/…`), envelopes, serializers |
-| `seed_bronze.py` / `seed_bronze.sh` | **Offline Bronze loader** — the no-tunnel twin of `SP_INGEST_ALL_BRONZE`; reuses `endpoints.py` serializers to load `BRONZE.*` VARIANT directly (for trial accounts) |
 | `run.sh` / `requirements.txt` | Boot script + deps |
+
+> The **offline Bronze loader** (`seed_bronze.py` / `seed_bronze.sh`) lives in
+> [`../src/seeders/`](../src/seeders/) with the other data-load scripts. It reuses this module's
+> `endpoints.py` serializers to load `BRONZE.*` directly — the no-tunnel path for trial accounts.
 
 The engine (`../src/seeders/_seedlib.py`) is shared, not copied — `build_rows()` is the
 one generator the seeders also use.
@@ -114,20 +117,11 @@ one generator the seeders also use.
 
 ## Trial accounts — offline Bronze load (no tunnel, no EAI)
 
-Trial accounts can't use an External Access Integration, so they can't pull the API over a tunnel.
-`seed_bronze.sh` is the offline twin of the ingest: it builds the same graph, serializes each record
-with the **same `endpoints.py` serializers**, and loads the identical JSON into `BRONZE.<entity>`
-VARIANT tables — so `SILVER.SP_BUILD_SILVER`, `04_gold.sql`, and `05_semantic_analyst.sql` run
-unchanged. The full Bronze → Silver → Gold medallion, fed from local files instead of HTTP.
-
-```bash
-./seed_bronze.sh --connection <conn>            # load BRONZE.* (add --dry-run to inspect the SQL first)
-# then flatten + build, exactly as the API path does:
-snow sql -c <conn> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
-```
-
-`python3 seed_bronze.py --selftest` asserts the serialized JSON resolves at the exact paths the
-flatten step reads.
+Trial accounts can't use an External Access Integration, so they can't pull this API over a tunnel.
+The offline twin is [`../src/seeders/seed_bronze.sh`](../src/seeders/) — it builds the same graph,
+serializes each record with this module's **same `endpoints.py` serializers**, and loads the identical
+JSON into `BRONZE.<entity>` so `SILVER.SP_BUILD_SILVER` → `04_gold` → `05_semantic_analyst` run
+unchanged. See [`../src/seeders/README.md`](../src/seeders/README.md).
 
 ---
 

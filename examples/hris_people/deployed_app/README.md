@@ -103,7 +103,7 @@ Bronze → Silver → Gold flow as Path A — just fed from files instead of HTT
 2. `src/03_silver.sql` — Silver schema + typed tables + `SP_BUILD_SILVER` (the flatten proc).
 3. Load Bronze (the offline twin of `SP_INGEST_ALL_BRONZE`), then flatten to Silver:
    ```bash
-   cd mock_api && ./seed_bronze.sh --connection <your-trial-connection>
+   cd src/seeders && ./seed_bronze.sh --connection <your-trial-connection>
    # then (the loader prints these):
    snow sql -c <your-trial-connection> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
    ```
