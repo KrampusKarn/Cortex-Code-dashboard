@@ -1,5 +1,5 @@
-# Local tooling for the kit (the seed generator + validators).
+# Local tooling for the demo (the offline Bronze seeder for the 7ptrial path).
 # NOTE: pandas/altair are NOT needed locally — they run inside Snowflake's
-# Streamlit runtime. The generator uses only the stdlib csv module + Faker.
+# Streamlit runtime. The seeder engine (src/seeders/_seedlib.py) uses the stdlib
+# + Faker only.
 faker>=20
-jsonschema>=4    # optional: validate_spec.py falls back to structural checks without it

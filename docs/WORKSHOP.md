@@ -1,51 +1,68 @@
-# Workshop: Build a Cortex dashboard from an API in an afternoon
+# Workshop: Build a Snowflake medallion + Cortex assistants, live with Cortex Code
 
-A facilitator's run-of-show for delivering this kit as a hands-on workshop. The arc:
-*see it built once, then build your own.*
+A facilitator's run-of-show. The arc: *the presenter builds the Employee 360 medallion live from a real API
+(the **DEMO** path), while attendees follow along on their trial accounts (the **7ptrial** path) and land at
+the same dashboard.*
 
 ## Learning objectives
 
 By the end, participants can:
-1. Explain the three-skill pipeline (extract → generate → scaffold) and the `schema_spec.json` contract.
-2. Use Cortex Code to turn a sample API response into a validated spec.
-3. Generate deterministic demo data and deploy a Streamlit-in-Snowflake dashboard.
-4. Wire a Cortex RAG chat (Cortex Search + `COMPLETE`) over a knowledge base.
-5. Know how to re-point the dashboard at real production data later.
+1. Explain the **Bronze → Silver → Gold** medallion and the two Cortex assistants (Search over docs, Analyst
+   over a semantic view).
+2. Watch Cortex Code **extract a live API**, then **generate the medallion SQL** with a review hook at each
+   layer.
+3. Reproduce the build on a trial account (no External Access) via the offline seeder.
+4. Deploy the Streamlit app and verify both assistants answer.
 
 ## Audience & prerequisites
 
 - Data/analytics engineers and solution architects comfortable with SQL and the terminal.
-- Each participant needs: a Snowflake account with **Cortex enabled**, the **`snow` CLI** authenticated (`~/.snowflake/connections.toml`), **Python 3.9+** with `pip install -r requirements.txt`, and this repo cloned.
-- Pre-flight (send the day before): run `snow connection test -c <conn>` and `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE SYSADMIN;`.
+- Each participant needs: a Snowflake account with **Cortex enabled**, the **`snow` CLI** authenticated with a
+  `7ptrial` connection, **Python 3.9+** with `pip install -r requirements.txt`, and this repo cloned.
+- Pre-flight (the day before): `snow connection test -c 7ptrial` and
+  `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE ACCOUNTADMIN;` (plus
+  `ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';` if models are region-limited).
+- The **presenter only** needs the `sevenpeaks_partner_demo` connection and the mock API + tunnel
+  (`mock_api/serve_eai.sh`).
 
 ## Agenda (~3 hours)
 
 | Time | Segment | Mode |
 |---|---|---|
-| 0:00–0:20 | **Why** — the problem (demo before data lands) + the pipeline overview | talk |
-| 0:20–0:35 | **The contract** — walk `docs/CONTRACT.md` + a real `schema_spec.json` | talk + repo |
-| 0:35–1:10 | **Live build** — facilitator builds the HRIS example from a sample API response using the 3 skills | demo |
+| 0:00–0:20 | **Why** — the medallion + Cortex assistants, and the "Cortex Code builds it" idea | talk |
+| 0:20–1:10 | **Live build (DEMO path)** — presenter drives skills ①→④, reviewing each layer | demo |
 | 1:10–1:20 | Break | — |
-| 1:20–2:30 | **Lab** — participants build a dashboard for *their own* API | hands-on |
-| 2:30–2:50 | **Show & tell** — a few participants demo their Assistant tab | share |
-| 2:50–3:00 | **Production** — re-pointing at real data; Q&A | talk |
+| 1:20–2:30 | **Lab (7ptrial path)** — participants reproduce it on a trial account | hands-on |
+| 2:30–2:50 | **Show & tell** — a few participants demo their two assistants | share |
+| 2:50–3:00 | **Production** — re-pointing GOLD views at real OmniHR/Harvest tables; Q&A | talk |
 
-## Live build (facilitator script, ~35 min)
+## Live build — DEMO path (presenter, ~50 min)
 
-Paste a small sample HR API response — e.g. an `employees` endpoint payload with a nested array, grabbed from a public API's docs (OmniHR, BambooHR, etc.) — as the "API response" and narrate each skill:
+On `sevenpeaks_partner_demo`, after `src/reset_for_coco.sql` (drops only the medallion) and `src/00_setup.sql`,
+start the API: `cd mock_api && ./serve_eai.sh start`. Then narrate the skill chain:
 
-1. **Extract** — invoke `api-schema-extraction` on that sample. Show how the response array becomes the `EMPLOYEES` table, nested arrays become child tables, and how it always adds the knowledge-base + chat tables. Validate: `python3 tools/validate_spec.py …`.
-2. **Generate** — invoke `demo-data-generator`. Show the printed row counts; open a CSV; emphasize determinism (`--seed`) and currency (`--today` / relative date tokens).
-3. **Scaffold** — invoke `dashboard-rag-scaffold`. For a browser-only audience: connect the repo to a Workspace, **Run All** on `deploy/workspace_setup.sql`, then create the Streamlit app *from repository*. (CLI alternative: render → `run.sh <conn>`, noting the **row-count assertion**, → `snow streamlit deploy`.) Open the app; ask the Assistant a question; show the **Sources** citations and that the current month has data.
+1. **`api-schema-extraction`** — CoCo curls `/openapi.json` + a sample page per endpoint, shows how
+   `employees`' nested `position.name` / `reporting_manager.id` become flatten paths, and writes
+   `build/extraction_map.json`.
+2. **`medallion-build`** — CoCo generates `build/bronze.sql`; **pause, review it together, then run** (point
+   the network rule at the tunnel, `CALL SP_INGEST_ALL_BRONZE`, show the raw VARIANT). Repeat for
+   `build/silver.sql` (`CALL SP_BUILD_SILVER`) and `build/gold.sql`. The **review hook at each layer** is the
+   moment to invite "what would you change here?" — widen a column, add a view — and re-run just that layer.
+3. **`cortex-analyst-search`** — generate the semantic view + the document Search; **review, then run**; load
+   `docs/*.md` and rebuild the chunks.
+4. **`dashboard-compose`** — deploy the committed app; ask "headcount by department" (Analyst) and "What is the
+   PTO policy?" (Search).
 
-(If time is short, pre-render an example ahead of the session and deploy that instead of building from a sample.)
+## Lab — 7ptrial path (participants, ~70 min)
 
-## Lab (participants, ~70 min)
+"Now build it on your trial account — no External Access needed." On `7ptrial`:
 
-"Now do it with your own API."
-1. Bring a sample response (or pick a public API). Run `api-schema-extraction`.
-2. `validate_spec.py` until green. Generate data. Eyeball the CSVs.
-3. Render, `run.sh`, deploy. Ask your Assistant a question grounded in a small `kb_content.json` you write (5–10 docs is enough).
+1. `src/00_setup.sql` + `src/03_silver.sql` (database, warehouses, PUBLIC tables, SILVER tables + flatten proc).
+2. `cd src/seeders && ./seed_bronze.sh --connection 7ptrial` (loads Bronze from the profiles), then
+   `CALL SILVER.SP_BUILD_SILVER();`.
+3. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
+4. Deploy with `src/deploy_app.sql` (Workspace) or `snow streamlit deploy -c 7ptrial`, load `docs/*.md`, and
+   ask each assistant a question.
 
 Facilitators float and unblock. The pitfalls table below covers ~90% of issues.
 
@@ -53,17 +70,17 @@ Facilitators float and unblock. The pitfalls table below covers ~90% of issues.
 
 | Pitfall | Fix |
 |---|---|
-| Assistant returns nothing | `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE <role>;` and wait for the Cortex Search service's initial build. |
-| Dashboard's current month is empty | Date columns used a literal past date — use `"max": "today"`, regenerate without `--today`. (This is the exact bug the kit was designed to prevent.) |
-| `USE WAREHOUSE` fails | Only one warehouse name exists — `app.warehouse`. Don't type a second one anywhere. |
-| A table loaded 0 rows | `run.sh`'s row-count assertion caught a `COPY INTO` header/column mismatch — fix the spec column order and reload. |
-| `snow streamlit deploy` can't find the app | Run it from the bundle's `app/` directory (it contains `snowflake.yml`). |
-| Spec won't validate | Read the validator's messages — usually a missing `gen` param, an `fk` to a non-existent table, or a missing chat/knowledge-base table. |
+| Either assistant returns nothing | `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE ACCOUNTADMIN;` and wait for the Cortex Search service's initial build. |
+| Dashboard charts blank | GOLD empty — Bronze not ingested/flattened. Check `BRONZE.BRONZE_INGEST_LOG`, re-`CALL SP_BUILD_SILVER`. |
+| `USE WAREHOUSE` confusion | Two warehouses by design: `DEMO_EMPLOYEE_APP` (app) + `DEMO_WH` (Search/tasks). Don't add a third. |
+| DEMO Bronze ingest fails | The network rule host doesn't match the live tunnel — `ALTER NETWORK RULE … SET VALUE_LIST=('<host>')` or `serve_eai.sh start --set-rule`. |
+| Seeder Bronze looks wrong | Edit `profiles_*.json`, re-run `seed_bronze.sh`, re-flatten; run `seed_bronze.py --selftest`. |
+| `snow streamlit deploy` can't find the app | Run it from `deployed_app/app/` (it has `snowflake.yml`). |
 
 ## Facilitator checklist
 
 - [ ] Participants completed pre-flight (connection test + CORTEX_USER grant).
 - [ ] Repo cloned; `pip install -r requirements.txt` done.
-- [ ] A shared warehouse/database naming convention agreed (so people don't collide).
-- [ ] A pre-rendered example deployed as a fallback demo.
+- [ ] The presenter's mock API + tunnel are up and the network rule points at it.
+- [ ] A pre-built account on standby as a fallback demo.
 - [ ] Time-boxed the lab; kept the last 10 minutes for the production re-pointing story.

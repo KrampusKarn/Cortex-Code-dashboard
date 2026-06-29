@@ -8,9 +8,8 @@ medallion and ships **two Cortex assistants**:
 - **Ask Your Data** — Cortex Analyst answering natural-language questions over the
   `GOLD.HR_ANALYST` semantic view.
 
-> A bespoke, hand-built app — not the kit's spec-driven tutorial output. The kit's templated
-> learn-path renders its own example with `templates/render.py`; the `../schema_spec.json` and
-> `../kb_content.json` alongside this folder are kept as lineage only.
+> The one worked demo, driven by the five Cortex Code skills (see the repo-root `README.md`). The
+> `../schema_spec.json` alongside this folder is an entity/lineage reference only — not executed or validated.
 
 ## Layout
 
@@ -36,9 +35,9 @@ entity data.
 `BRONZE` is filled two ways — both then run the **same** `SP_BUILD_SILVER` → Gold, so the dashboard
 is identical either way:
 
-- **Live API ingest (DEMO):** `mock_api/` serves OmniHR + Harvest JSON over an HTTPS tunnel;
-  `SP_INGEST_ALL_BRONZE` pulls it into Bronze.
-- **Offline seeder (trial / no EAI):** `src/seeders/seed_bronze.sh` generates the same JSON and
+- **Live API ingest (DEMO, connection `sevenpeaks_partner_demo`):** `mock_api/` serves OmniHR + Harvest JSON
+  over an HTTPS tunnel; `SP_INGEST_ALL_BRONZE` pulls it into Bronze. Skill-driven — see the DEMO path below.
+- **Offline seeder (7ptrial, connection `7ptrial`):** `src/seeders/seed_bronze.sh` generates the same JSON and
   loads it straight into Bronze — no API or external-access integration needed.
 
 ## Knowledge base — the Documents assistant
@@ -76,40 +75,41 @@ The app and both assistants deploy straight from the public repo
 aren't available in your region, run `ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';`.
 Run all SQL as `ACCOUNTADMIN`; every script is idempotent.
 
-### Path A — DEMO account + mock API (medallion ELT)
+### DEMO path — live mock API, skill-driven (presenter · connection `sevenpeaks_partner_demo`)
 
-Demonstrates the live Extract → Bronze → Silver → Gold flow. The mock API + tunnel run on your
-machine; pass `--connection <your-demo-connection>` on every `snow` command.
+The showcase: Cortex Code **extracts the live API and generates the medallion**, pausing for your review at
+each layer. You don't run `02→05.sql` by hand — those stay as the golden reference CoCo converges on (and the
+7ptrial runtime). Pass `--connection sevenpeaks_partner_demo` on every `snow` command.
 
-0. *(optional — for a clean "CoCo builds it from empty" run)* `src/reset_for_coco.sql` — drops the
-   `BRONZE`/`SILVER`/`GOLD` schemas (keeps the app, chat tables, Cortex Search, and docs).
-1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables (idempotent).
-2. Start the API + tunnel on your machine: `cd mock_api && ./serve_eai.sh start`.
-3. `src/02_bronze.sql` — creates `BRONZE`/`SILVER`/`GOLD`, the external-access integration, the
-   network rule, and the ingest procedures.
-4. Point the network rule at your tunnel: `./serve_eai.sh start --set-rule`. Needed the first time
-   and **after any reset** (`02_bronze` recreates the rule with a placeholder host); skip only if
-   the rule already points at your stable ngrok domain.
-5. Ingest: `CALL BRONZE.SP_INGEST_ALL_BRONZE('https://<your-domain>');` — use the exact URL
-   `serve_eai.sh` printed.
-6. `src/03_silver.sql`, then `CALL SILVER.SP_BUILD_SILVER();`
-7. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
-8. Deploy the app + load the documents (see **Deploy** below).
+0. **Clean slate:** `src/reset_for_coco.sql` — drops only `BRONZE`/`SILVER`/`GOLD` (keeps the app, chat
+   tables, Cortex Search, docs).
+1. `src/00_setup.sql` — database, the two warehouses, PUBLIC app/RAG tables (idempotent).
+2. Start the API + tunnel: `cd mock_api && ./serve_eai.sh start` (first time / after a reset: add `--set-rule`
+   so the network rule points at your tunnel).
+3. **Drive Cortex Code through the skills** (each medallion layer is generated into `build/`, reviewed, then
+   run):
+   - `api-schema-extraction` → reads the live API → `build/extraction_map.json`
+   - `medallion-build` → `build/bronze.sql` **→ review → run** (sets the rule + `CALL SP_INGEST_ALL_BRONZE`) →
+     `build/silver.sql` **→ review → run** (`CALL SP_BUILD_SILVER`) → `build/gold.sql` **→ review → run**
+   - `cortex-analyst-search` → semantic view + document Search **→ review → run**
+   - `dashboard-compose` → deploy the app + load the documents (see **Deploy** below)
 
-### Path B — trial account + offline Bronze load (full medallion, no EAI)
+> The committed `src/02→05.sql` are the **golden reference** these skills converge on — read them to
+> sanity-check what CoCo generates; don't run them by hand on this path.
 
-Trial accounts can't use an External Access Integration, so instead of pulling the mock API over a
-tunnel, generate the **same JSON locally** and load it straight into Bronze. Same
-Bronze → Silver → Gold flow as Path A — just fed from files instead of HTTP. Pass
-`--connection <your-trial-connection>` on every command.
+### 7ptrial path — trial account, offline Bronze load, no EAI (attendees · connection `7ptrial`)
 
-1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables.
+Trial accounts can't use an External Access Integration, so instead of pulling the mock API over a tunnel,
+load the **same JSON locally** into Bronze and run the committed reference SQL. Same Bronze → Silver → Gold as
+the DEMO path — just fed from files. Pass `--connection 7ptrial` on every command.
+
+1. `src/00_setup.sql` — database, warehouses, PUBLIC app/RAG tables.
 2. `src/03_silver.sql` — Silver schema + typed tables + `SP_BUILD_SILVER` (the flatten proc).
 3. Load Bronze (the offline twin of `SP_INGEST_ALL_BRONZE`), then flatten to Silver:
    ```bash
-   cd src/seeders && ./seed_bronze.sh --connection <your-trial-connection>
+   cd src/seeders && ./seed_bronze.sh --connection 7ptrial
    # then (the loader prints these):
-   snow sql -c <your-trial-connection> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
+   snow sql -c 7ptrial --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
    ```
 4. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
 5. Load the documents + deploy the app (below).

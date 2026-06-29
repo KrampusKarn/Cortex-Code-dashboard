@@ -1,68 +1,60 @@
 # Contributing
 
-Thanks for extending the Cortex Dashboard Kit. The kit is a set of Cortex Code skills plus
-generalized templates; contributions usually fall into one of three buckets: a new data-source
-example, an improvement to a skill, or a fix to the templates/tooling.
+Thanks for improving the Employee 360 Cortex Code demo. This repo is **one worked demo** (the HRIS medallion
+app under `examples/hris_people/deployed_app/`) plus the **five Cortex Code skills** that drive it.
+Contributions usually fall into: a skill improvement, a change to the demo's SQL/app, or a fix to the mock
+API / seeder.
 
 ## Ground rules
 
-- **Never commit secrets.** The kit reads Snowflake credentials from your local
-  `~/.snowflake/connections.toml` via the `snow` CLI. Connection files, `*.p8` keys, and
-  `.env` files are git-ignored on purpose — keep it that way. Don't add real credentials.
-- **Synthetic data only.** Everything under `examples/*/seed/` is produced by the generator
-  from a `schema_spec.json`. Never commit real customer, employee, or client data.
-- **Code against the contract.** Specs must conform to [`docs/CONTRACT.md`](docs/CONTRACT.md)
-  and validate against `templates/schema_spec.schema.json`.
+- **Never commit secrets.** Snowflake credentials live in your local `~/.snowflake/connections.toml` and are
+  read by the `snow` CLI. Connection files, `*.p8` keys, and `.env` files are git-ignored — keep it that way.
+- **Synthetic data only.** All demo data is generated from `src/seeders/profiles_*.json`. Never commit real
+  customer, employee, or client data.
+- **Never overwrite `src/*.sql` from the DEMO path.** The committed `src/02→05.sql` are the golden reference
+  *and* the 7ptrial runtime. CoCo's live build writes to the git-ignored `deployed_app/build/` instead.
 
 ## Local setup
 
 ```bash
-pip install -r requirements.txt   # Faker + jsonschema
+pip install -r requirements.txt   # Faker only (the seeder engine)
 ```
-`pandas`/`altair` are not needed locally (they run in Snowflake's Streamlit runtime). The
-generator and validators are stdlib + Faker only.
-
-## Adding a new data source (the 3-skill flow)
-
-1. **Extract** — use the `api-schema-extraction` skill (or hand-write) a `schema_spec.json`.
-2. **Validate** — `python3 tools/validate_spec.py path/to/schema_spec.json` must exit 0.
-3. **Generate** — `python3 templates/generator/generate_seed.py --spec <spec> --out <dir>`.
-4. **Scaffold + deploy** — `python3 templates/render.py --spec <spec> --out <dir>` then the
-   `dashboard-rag-scaffold` steps.
-
-If you're contributing it as a new worked example, mirror the layout of
-[`examples/hris_people`](examples/hris_people): `schema_spec.json`, `kb_content.json`,
-`seed/`, `deploy/`, and `app/` (with domain dashboard tabs added to `streamlit_app.py`).
+`pandas`/`altair` are not needed locally — they run in Snowflake's Streamlit runtime.
 
 ## Authoring or changing a skill
 
-Skills live under `.snowflake/cortex/skills/<skill-name>/SKILL.md` with a `references/` folder.
-Follow the existing convention:
+Skills live under `.snowflake/cortex/skills/<skill-name>/SKILL.md` with a `references/` folder. Follow the
+existing convention:
 
 - YAML frontmatter with `name`, `description`, and a `tools:` list.
-- Sections: `# When to Use`, `# Prerequisites`, `# Workflows`, `# Best Practices`, `# Examples`.
-- Put copy-paste material in `references/`; reference each file by its `references/<file>` path.
+- Sections: `# When to Use`, `# Prerequisites`, `# Workflows`, `# Best Practices`, `# Examples` (the linter
+  requires `When to Use` + `Workflows`).
+- Put copy-paste SQL in `references/`; reference each file by its `references/<file>` path (the linter checks
+  it exists).
+- The DEMO build skills (`medallion-build`, `cortex-analyst-search`) must keep the **per-layer review hook** —
+  generate → present → wait → run on approval.
 
-Lint structure before opening a PR:
+Lint before opening a PR:
 ```bash
 python3 tools/lint_skill.py .snowflake/cortex/skills/<skill-name>/SKILL.md
 ```
-Keep documented commands accurate to the real tool flags — re-read `templates/render.py` and
-`templates/generator/generate_seed.py` if you change behavior.
 
-## Changing the templates or contract
+## Changing the demo schema
 
-- If you add a `gen` strategy or a `schema_spec` field, update **all** of:
-  `templates/schema_spec.schema.json`, `tools/validate_spec.py` (semantic checks),
-  `templates/generator/generate_seed.py` and/or `templates/render.py`, and
-  [`docs/CONTRACT.md`](docs/CONTRACT.md).
-- Re-run both worked examples end to end (validate → generate → render → py_compile the apps)
-  so they stay green.
+The medallion is described in several places that must stay in sync:
+
+- `src/03_silver.sql` (typed tables + `SILVER_FIELD_MAP`) is authoritative for the entity schema. The mock API
+  reads it via `mock_api/schema.py`, so an API change starts here.
+- The seeder data brain is `src/seeders/profiles_omnihr.json` / `profiles_harvest.json`; the generation engine
+  `src/seeders/_seedlib.py` is shared with the mock API (`mock_api/dataset.py`) — one engine, no drift.
+- If you change the schema or a serializer, run the seeder self-test:
+  `cd examples/hris_people/deployed_app/src/seeders && python3 seed_bronze.py --selftest`.
+- Keep view names the app reads (`GOLD.EMPLOYEE_360`, `GOLD.HR_ANALYST`, `COMPANY_KB_SEARCH`, …) identical, or
+  update `app/streamlit_app.py` to match.
 
 ## Pre-PR checklist
 
-- [ ] `python3 tools/validate_spec.py` passes for any spec you touched.
 - [ ] `python3 tools/lint_skill.py` passes for any skill you touched.
-- [ ] Generators run cleanly and re-running is deterministic (`diff -r`).
-- [ ] `python3 -m py_compile` passes for any Python you touched.
-- [ ] No secrets, no real data, no credentials in the diff.
+- [ ] `python3 seed_bronze.py --selftest` passes if you touched the schema, profiles, serializers, or engine.
+- [ ] `python3 -m py_compile` passes for any Python you touched (the apps can't run locally — they need Snowpark).
+- [ ] No secrets, no real data, no credentials in the diff; no DEMO-generated SQL committed under `build/`.

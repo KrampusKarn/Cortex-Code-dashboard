@@ -1,134 +1,103 @@
-# Cortex Dashboard Kit
+# Employee 360 — a Cortex Code medallion demo
 
-> Turn any API data source into a Snowflake-native dashboard **with a Cortex AI chat assistant** — using Cortex Code to do the heavy lifting.
+> Watch **Cortex Code** stand up a Snowflake-native **Bronze → Silver → Gold** dashboard with **two Cortex
+> assistants** — live, from a real API, with a human reviewing each layer.
 
-Point Cortex Code at an API's documentation (or a sample JSON response) and this kit walks it through a repeatable, three-step pipeline:
+This repo is **one worked demo**, not a generic kit. Cortex Code extracts a live HR API, builds the medallion,
+adds the assistants, and deploys the dashboard:
 
 ```
- API docs / sample JSON
+ live mock API (OmniHR + Harvest)
+          │  ① api-schema-extraction      → build/extraction_map.json
+          ▼
+   Bronze → Silver → Gold                 ② medallion-build   (generate each layer → REVIEW HOOK → run)
           │
-          ▼  (skill: api-schema-extraction)
-   schema_spec.json  ───────────────┐
-          │                         │
-          ▼  (skill:                ▼  (skill: dashboard-rag-scaffold)
-   demo-data-generator)        deploy SQL + Streamlit RAG app
-   deterministic seed CSVs  ──▶  load → Cortex Search → Streamlit-in-Snowflake
+          ▼  ③ cortex-analyst-search       semantic view (Analyst) + document Search (RAG)
+   GOLD.HR_ANALYST  +  COMPANY_KB_SEARCH
+          │
+          ▼  ④ dashboard-compose           deploy the Streamlit app (14 tabs + both assistants)
+   DASHBOARD_SPS
 ```
 
-The result is a working demo — dashboards **plus a retrieval-augmented Cortex chat** over a knowledge base — that you can show *before* a single byte of real API data has landed, and that re-points at production tables later by swapping a config.
+The **review hook** is the point: skills ② and ③ generate the SQL into `build/`, **stop, and wait** for the
+presenter to review (and tweak) each layer before it runs — so you control the schema and see how little it
+takes to build a medallion with Cortex Code.
 
-## The three Cortex Code skills
+## Two paths
 
-| Skill | Input | Output |
+| Path | Connection | Who | Bronze comes from |
+|---|---|---|---|
+| **DEMO** | `sevenpeaks_partner_demo` | the presenter | the live mock API + External Access (skill-driven, reviewed) |
+| **7ptrial** | `7ptrial` | attendees on trial accounts (no EAI) | the offline seeder loads the same JSON, then the committed reference SQL runs as-is |
+
+Both converge on the **same** GOLD layer and dashboard. Trial accounts can't create an External Access
+Integration, which is the only reason the offline path exists.
+
+## The five Cortex Code skills (`.snowflake/cortex/skills/`)
+
+| Skill | Path | Role |
 |---|---|---|
-| [`api-schema-extraction`](.snowflake/cortex/skills/api-schema-extraction) | API docs / sample JSON | a validated `schema_spec.json` |
-| [`demo-data-generator`](.snowflake/cortex/skills/demo-data-generator) | `schema_spec.json` | deterministic seed CSVs |
-| [`dashboard-rag-scaffold`](.snowflake/cortex/skills/dashboard-rag-scaffold) | spec + knowledge base | Snowflake objects + Streamlit RAG app |
-
-The contract that ties them together — `schema_spec.json` — is documented in [`docs/CONTRACT.md`](docs/CONTRACT.md).
-
-## Worked example
-
-| Example | Source shape | What it shows |
-|---|---|---|
-| [`examples/hris_people`](examples/hris_people) | OmniHR / Harvest (HR) | A **hand-built live app** (not templated output). Its deployable form is [`deployed_app/`](examples/hris_people/deployed_app) — 14 dashboard tabs + a document-ingestion RAG chat, deployed to `DEMO_EMPLOYEE_APP`. The kept `schema_spec.json` / `kb_content.json` are lineage only. |
-
-> The **templated** pipeline (extract → generate → scaffold) runs against *your own* API via the
-> three skills — see [**Build a dashboard for your API**](#build-a-dashboard-for-your-api) below.
-> The deploy walkthroughs use `examples/<your_example>/…` for the bundle you render in that step.
+| [`api-schema-extraction`](.snowflake/cortex/skills/api-schema-extraction) | DEMO ① | read the live API → `build/extraction_map.json` |
+| [`medallion-build`](.snowflake/cortex/skills/medallion-build) | DEMO ② | generate Bronze/Silver/Gold SQL with a per-layer review hook |
+| [`cortex-analyst-search`](.snowflake/cortex/skills/cortex-analyst-search) | DEMO ③ | semantic view (Analyst) + document Search (RAG) |
+| [`dashboard-compose`](.snowflake/cortex/skills/dashboard-compose) | both ④ | deploy + verify the Streamlit app |
+| [`trial-seed-bronze`](.snowflake/cortex/skills/trial-seed-bronze) | 7ptrial | offline Bronze load → the committed reference SQL |
 
 ## Prerequisites
 
-**Always** — a **Snowflake account with Cortex enabled** (Cortex Search plus `SNOWFLAKE.CORTEX.COMPLETE` / `SEARCH_PREVIEW`). The deploy role needs the Cortex role:
-```sql
-GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE SYSADMIN;
-```
+- A **Snowflake account with Cortex enabled**, and the role granted Cortex:
+  ```sql
+  GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE ACCOUNTADMIN;
+  -- if models are region-limited:  ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
+  ```
+- For the **DEMO** path only: the **`snow` CLI** + a `sevenpeaks_partner_demo` connection in
+  `~/.snowflake/connections.toml`, plus a tunnel for the mock API (`mock_api/serve_eai.sh`, ngrok/cloudflare).
+- For the **7ptrial** path: a `7ptrial` connection and **Python 3.9+** with `pip install -r requirements.txt`
+  (Faker only — the apps run inside Snowflake, not locally).
 
-That is **all** you need for the Snowflake Workspaces path below — it runs entirely in the browser, no local install.
+## Run it
 
-**Only for the CLI / local-IDE path:**
-- The [**`snow` CLI**](https://docs.snowflake.com/en/developer-guide/snowflake-cli/index), authenticated via a connection in `~/.snowflake/connections.toml`. (Credentials live there, never in this repo.)
-- **Python 3.9+** with the local tooling: `pip install -r requirements.txt` (Faker + jsonschema). `pandas`/`altair` are **not** needed locally — they run inside Snowflake's Streamlit runtime; the generator is stdlib-only.
+The ordered runbook is **[`examples/hris_people/deployed_app/README.md`](examples/hris_people/deployed_app/README.md)**
+(both paths) and **[`src/README.md`](examples/hris_people/deployed_app/src/README.md)** (the per-file run
+table). In short:
 
-## Deploy in Snowflake Workspaces (recommended — no local tooling)
+- **DEMO (presenter):** `src/reset_for_coco.sql` → `src/00_setup.sql` → start the API (`mock_api/serve_eai.sh
+  start`) → drive Cortex Code through skills ①→④, approving each medallion layer.
+- **7ptrial (attendee):** `src/00_setup.sql` + `src/03_silver.sql` → `src/seeders/seed_bronze.sh --connection
+  7ptrial` → `CALL SP_BUILD_SILVER()` → `src/04_gold.sql` → `05_semantic_analyst.sql` →
+  `01_document_ingestion.sql` → deploy the app.
 
-For non-technical users: everything runs in the browser — no shell, no `PUT`, no Python. A rendered example ships a single self-contained `deploy/workspace_setup.sql`: warehouse/db/schema + tables + the synthetic demo data as `INSERT`s + the Cortex Search service.
+See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for the facilitated run-of-show.
 
-1. **Connect this repo to a Workspace** — in Snowsight: *Projects » Workspaces » From Git repository*, paste the repo URL (a public repo needs no auth). ([docs](https://docs.snowflake.com/en/user-guide/ui-snowsight/workspaces-git))
-2. **Grant Cortex once** (a role admin): `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE SYSADMIN;`
-3. **Open your example's `examples/<your_example>/deploy/workspace_setup.sql` → Run All.** It creates everything and loads the data inline; the final query is a row-count check (every table should be non-empty).
-4. **Create the Streamlit app from the repo** — *Projects » Streamlit » + Streamlit App » From repository*, point it at `examples/<your_example>/app/`, main file `streamlit_app.py`. (The equivalent `CREATE STREAMLIT … FROM @repo` is at the bottom of `workspace_setup.sql`.)
-5. Give Cortex Search a few minutes to finish its initial build, then open the app → **Assistant** tab → ask "What are our standard payment terms?" — you should get a grounded answer with a **Sources** expander.
+## What's tracked vs generated
 
-## Quick start — CLI / local IDE (advanced)
-
-This path regenerates `seed/` and the numbered deploy SQL locally, then loads via the `snow` CLI. Use it if you live in a terminal; otherwise prefer the Workspaces path above.
-
-```bash
-# 0. install local tooling and confirm your Snowflake connection
-pip install -r requirements.txt
-snow connection test -c <your_connection>
-
-# 1. validate the example spec
-python3 tools/validate_spec.py examples/<your_example>/schema_spec.json
-
-# 2. (re)generate the synthetic seed data — omit --today for "current" data,
-#    or pin it for byte-stable output
-python3 templates/generator/generate_seed.py \
-    --spec examples/<your_example>/schema_spec.json \
-    --out  examples/<your_example>/seed --today 2026-06-22
-
-# 3. render the deployable bundle (deploy SQL + Streamlit app) in place
-python3 templates/render.py --spec examples/<your_example>/schema_spec.json \
-    --out examples/<your_example>
-
-# 4. bootstrap + load + create the Cortex Search service (+ row-count verification)
-examples/<your_example>/deploy/run.sh <your_connection>
-
-# 5. deploy the Streamlit app (run from the app dir; it reads snowflake.yml)
-cd examples/<your_example>/app && snow streamlit deploy --connection <your_connection> --replace && cd -
-```
-
-Open the URL from step 5, go to the **Assistant** tab, and ask a question grounded in your knowledge base — you should get an answer with a **Sources** expander. The other tabs are the example's dashboards.
-
-> **What's in git, per templated example.** Tracked: the hand-authored inputs (`schema_spec.json`, `kb_content.json`, the customized `app/streamlit_app.py`) **plus** the artifacts the browser path needs server-side — `deploy/workspace_setup.sql` and the rest of `app/`. Git-ignored and regenerated by the CLI steps above: the bulky `seed/` CSVs and the numbered SQL + `run.sh`. Re-rendering is safe — `render.py` never overwrites your `app/streamlit_app.py`. (`hris_people` is the exception — a hand-built live app under [`deployed_app/`](examples/hris_people/deployed_app), not templated output.)
-
-## Build a dashboard for *your* API
-
-1. Hand Cortex Code your API docs or a sample response and invoke **`api-schema-extraction`** → it writes a `schema_spec.json`.
-2. Invoke **`demo-data-generator`** → seed CSVs.
-3. Invoke **`dashboard-rag-scaffold`** → deploy + Streamlit RAG app.
-
-The scaffold writes a self-contained `deploy/workspace_setup.sql`, so your own API gets the same browser-only deploy: connect the repo to a Workspace, **Run All**, then create the Streamlit app from the repo — no local tooling required.
-
-See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for a facilitated run-of-show.
+- **Committed:** the app (`deployed_app/app/`), the setup + medallion SQL (`deployed_app/src/*.sql` — the
+  golden reference *and* the 7ptrial runtime), the mock API, the RAG docs, and `schema_spec.json` (lineage
+  reference only).
+- **Git-ignored / regenerated:** the DEMO path's generated SQL under `deployed_app/build/`. CoCo authors it
+  live for review; it never overwrites `src/`.
 
 ## Repository layout
 
 ```
-docs/                      CONTRACT.md (the schema_spec contract), WORKSHOP.md
-AGENTS.md                  workspace instructions Cortex Code auto-loads every conversation
-.snowflake/cortex/skills/  the three Cortex Code skills (+ references/) — where Snowsight discovers them
-templates/                 schema_spec.schema.json, generator/generate_seed.py, render.py, app/* (RAG app)
-examples/hris_people/      the worked example — a hand-built LIVE app:
-                           deployed_app/app/     the Streamlit monolith
-                           deployed_app/src/     setup SQL + Bronze→Silver→Gold ELT + semantic view
-                           deployed_app/mock_api/ the live Extract source (FastAPI)
-                           deployed_app/docs/    the RAG corpus (markdown)
-                           schema_spec.json / kb_content.json kept as lineage only.
-tools/                     validate_spec.py, lint_skill.py (static checks)
+AGENTS.md                  instructions Cortex Code auto-loads every conversation
+.snowflake/cortex/skills/  the five Cortex Code skills (+ references/)
+examples/hris_people/
+  deployed_app/app/        the Streamlit monolith (14 tabs + both assistants)
+  deployed_app/src/        00→05 setup + Bronze→Silver→Gold + semantic view + deploy_app.sql + seeders/
+  deployed_app/mock_api/   the live Extract source (FastAPI: OmniHR + Harvest)
+  deployed_app/docs/       the RAG corpus (markdown)
+  deployed_app/build/      git-ignored — DEMO-path generated SQL (for review)
+  schema_spec.json         entity/lineage reference only
+docs/                      WORKSHOP.md (the demo runbook)
+tools/                     lint_skill.py (skill structure check)
 ```
-
-## How it works
-
-- **One contract.** Everything keys off `schema_spec.json` (see [`docs/CONTRACT.md`](docs/CONTRACT.md)), validated by `templates/schema_spec.schema.json`.
-- **Deterministic data.** The generator seeds Faker/`random` from a fixed seed; the knowledge-base table is seeded from a curated `kb_content.json`; chat tables are DDL-only (the app writes them).
-- **No hardcoding.** Every Snowflake/app identity value (database, warehouse, model, company name, prompts) lives in a generated `app_config.py`; the Streamlit app and SQL read only from there, so there is one warehouse name and no drift.
-- **Parameterized RAG.** `templates/app/rag_chat.py` does `SEARCH_PREVIEW` → `COMPLETE`, persists chat with **bind variables only** (no string-interpolated SQL), and works for any domain.
 
 ## Security
 
-This kit connects to Snowflake through the `snow` CLI, which reads credentials from your local `~/.snowflake/connections.toml` — **never from this repo**. Connection files, `*.p8` keys, and `.env` files are git-ignored. Everything under `examples/*/seed/` is synthetic data produced by the generator (and itself git-ignored — regenerate it); commit no real customer, employee, or client data.
+Credentials live in `~/.snowflake/connections.toml`, **never in this repo** — connection files, `*.p8` keys,
+and `.env` files are git-ignored. Everything under `examples/` is synthetic; commit no real customer, employee,
+or client data.
 
 ## License
 
