@@ -37,6 +37,8 @@ dist/
 build/
 
 CLAUDE.md
+docs/WORKSHOP.md
+
 # ── DEMO-path generated SQL (CoCo authors it live; not committed) ─────────────
 # The medallion-build / cortex-analyst-search skills write generated Bronze/Silver/
 # Gold/semantic SQL into the example's build/ dir for review before running. That

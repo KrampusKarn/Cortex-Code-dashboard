@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "snowflake_sql_execute|run_snowflake_query|Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .cortex/hooks/guard_medallion.sh", "timeout": 20 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "snowflake_sql_execute|run_snowflake_query|Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .cortex/hooks/verify_medallion.sh", "timeout": 120 }
+        ]
+      }
+    ]
+  }
+}
