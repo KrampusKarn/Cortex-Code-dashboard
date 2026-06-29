@@ -4,10 +4,10 @@ _seedlib.build_rows() expects — so the mock API needs NO Snowflake connection 
 boot, yet stays in lockstep with the real schema (00_setup.sql was captured from
 the live account via GET_DDL).
 
-Returns the SAME column-dict shape introspect() produces:
+Returns the column-dict shape _seedlib.build_rows() expects:
     cols[TABLE] = [{name, type, len, scale, nullable, identity}, ...]
     pk[TABLE]   = "PK_COLUMN"
-so the seeders and the mock API share one generation engine with one schema model.
+so the mock API and the offline Bronze seeder share one generation engine with one schema model.
 """
 from __future__ import annotations
 

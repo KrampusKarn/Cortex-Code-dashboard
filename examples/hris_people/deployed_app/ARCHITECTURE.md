@@ -42,7 +42,7 @@ source), **docs** (RAG corpus):
 | `src/00_setup.sql` | From-scratch infra + all 38 tables |
 | `src/01_document_ingestion.sql` | RAG chat backend (`COMPANY_KB_SEARCH` over `DOCUMENT_CHUNKS`) |
 | `src/02_bronze.sql` … `05_semantic_analyst.sql` | Bronze→Silver→Gold ELT + the `GOLD.HR_ANALYST` semantic view |
-| `src/seeders/` | Per-source synthetic-data seeders (OmniHR / Harvest) |
+| `src/seeders/` | The offline Bronze seeder (`seed_bronze.sh`) — loads both sources into `BRONZE.*`, the no-EAI twin of the API ingest |
 | `src/migrations/` | One-off schema migrations |
 | `mock_api/` | FastAPI replica of the OmniHR + Harvest APIs — the live Extract source |
 | `docs/*.md` | The RAG corpus (health benefits, PTO, upcoming events) |

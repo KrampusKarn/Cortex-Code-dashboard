@@ -1,94 +1,67 @@
-# `seeders/` — load synthetic data into Snowflake (no mock API needed)
+# `seeders/` — load synthetic data into Bronze (no mock API needed)
 
-**This is where attendees / Cortex Code find the data-load scripts.** All synthetic data is
-structure-driven, FK-coherent, and API-realistic. There are **two ways to load**, matching the
-two layers of the medallion:
+**This is where attendees / Cortex Code find the data-load script.** There is **one seeder**,
+`seed_bronze.sh`, and it loads **both data sources (OmniHR + Harvest) into the Bronze layer** — the
+no-tunnel twin of `BRONZE.SP_INGEST_ALL_BRONZE`. From there the *same* `SILVER.SP_BUILD_SILVER`
+flattens it, exactly as the live mock-API path does. So the seeder and the mock-API path are two
+front-ends to the **same** Bronze → Silver → Gold medallion.
 
-### 1. Offline Bronze load — `seed_bronze.sh`  (recommended; mirrors the mock-API path)
-
-The no-tunnel twin of `BRONZE.SP_INGEST_ALL_BRONZE`. Generates the **same JSON the mock API serves**
-(reusing `../../mock_api/endpoints.py`) and loads it into `BRONZE.<entity>` VARIANT tables — then the
-**same** `SILVER.SP_BUILD_SILVER` flattens it. This is the full Bronze → Silver → Gold medallion
-without an External Access Integration, so it works on **trial accounts** and is byte-identical to
-the live API path (same `SEED`).
-
-```bash
-./seed_bronze.sh --connection <your-connection>     # add --dry-run to inspect the SQL first
-snow sql -c <your-connection> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
-```
-Prereq: `../00_setup.sql` + `../03_silver.sql` first. `python3 seed_bronze.py --selftest` asserts the
-JSON matches the flatten paths.
-
-### 2. Direct Silver load — `seed_omnihr.sh` / `seed_harvest.sh` / `seed_all.sh`  (shortcut)
-
-Skips Bronze and writes typed rows **straight into Silver** — faster for a quick refresh, but it
-doesn't demonstrate the raw→flatten step. One seeder per source so the data sources stay separate:
-
-| Seeder | Source | Tables |
+| Path | How Bronze is filled | Then |
 |---|---|---|
-| `seed_omnihr.sh` | **OmniHR** (`Omni API v1`) | 18 — employees, org, recruitment, leave |
-| `seed_harvest.sh` | **Harvest** (v2) | 15 — clients, projects, time, billing |
-| `seed_all.sh` | both | 33 — runs them in FK-safe order |
+| **Mock API** (DEMO, needs External Access) | `SP_INGEST_ALL_BRONZE` pulls the API over a tunnel | `SP_BUILD_SILVER` |
+| **Seeder** (trial / any account, no EAI) | `seed_bronze.sh` loads the same JSON locally | `SP_BUILD_SILVER` |
 
-```bash
-./seed_all.sh --connection <your-connection> --schema SILVER --reset
-```
+The seeded Bronze is **byte-identical** to the API's (same serializers in `../../mock_api/endpoints.py`,
+same `SEED=42`), so `SP_BUILD_SILVER`, `04_gold.sql`, and `05_semantic_analyst.sql` run unchanged.
 
-The 5 **app-managed** tables are never seeded by either path: `CHAT_SESSIONS`, `CHAT_MESSAGES`,
-`DOCUMENT_CHUNKS`, `DOC_INGEST_LOG`, `COMPANY_KNOWLEDGE_BASE`.
-
-> The dashboard reads **`GOLD`** (built from **`SILVER`**). Both load paths land in Silver, so target
-> `--schema SILVER`. Prereq: `../00_setup.sql` + `../03_silver.sql`. (`--schema PUBLIC`, the default,
-> targets the flat base tables from `00_setup.sql` — not the dashboard's read path.)
-
-## How it works
-
-- **Structure-driven:** `_seedlib.py` reads the *live* table structure each run
-  (`INFORMATION_SCHEMA.COLUMNS` + `SHOW PRIMARY KEYS`), so it adapts automatically when the
-  schema changes — no table/column list is hardcoded in the engine.
-- **FK-coherent:** foreign keys are inferred from column names (+ an alias map) and drawn from
-  **real parent rows**. Cross-source parents (e.g. `TIME_ENTRIES.EMPLOYEE_ID → EMPLOYEES`) are
-  read live from the DB, which is why **order matters**: OmniHR → Harvest.
-- **API-realistic:** the maintained artifacts are the two `profiles_*.json` files — they map
-  `TABLE.COLUMN` to a generator (`choice`/`enumerate`/`int`/`float`/`date`/`bool`/`template`/`faker`)
-  with values drawn from each API's real fields/enums. Update a profile when an API changes; the
-  engine and scripts stay untouched.
-
-## Run order
+## Run
 
 ```bash
 cd examples/hris_people/deployed_app/src/seeders
 
-# always pass --connection (the scripts have no default — it resolves from your
-# local ~/.snowflake/connections.toml):
+# Prereq (once): ../00_setup.sql + ../03_silver.sql  (database, warehouses, SILVER tables + SP_BUILD_SILVER)
 
-# preview first — generates the SQL, executes nothing:
-./seed_all.sh --connection <your-connection> --dry-run
+# 1) load BOTH sources into BRONZE.<entity> VARIANT  (add --dry-run to inspect the SQL first)
+./seed_bronze.sh --connection <your-connection>
 
-# full coherent rebuild of the live demo data (truncate + reseed, one confirmation):
-./seed_all.sh --connection <your-connection> --reset
+# 2) flatten Bronze -> Silver (the same proc the API path calls)
+snow sql -c <your-connection> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
 
-# or one source at a time (OmniHR must run before Harvest):
-./seed_omnihr.sh  --connection <your-connection> --reset
-./seed_harvest.sh --connection <your-connection> --reset
+# 3) build Gold + the semantic view (seed_bronze.sh prints these too)
+snow sql -c <your-connection> --role ACCOUNTADMIN -f ../04_gold.sql
+snow sql -c <your-connection> --role ACCOUNTADMIN -f ../05_semantic_analyst.sql
 ```
 
-Prereq: run `../00_setup.sql` once so the base tables exist.
-
-## Flags
+Always pass `--connection` — the script has no default; it resolves from your local
+`~/.snowflake/connections.toml`.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--connection` | `<your-connection>` | snow CLI connection (from your local `connections.toml`) |
-| `--database` / `--schema` | `DEMO_EMPLOYEE_APP` / `PUBLIC` | target |
-| `--rows N` | `50` | default rows per table (a profile's `tables.<T>.rows` overrides) |
-| `--seed N` | `42` | RNG seed (deterministic output) |
-| `--reset` | off | **TRUNCATE** the source's tables before loading — destructive; requires a typed confirmation |
-| `--dry-run` | off | generate the INSERT SQL and print a preview; execute nothing |
+| `--connection` | *(required)* | snow CLI connection |
+| `--database` | `DEMO_EMPLOYEE_APP` | target database |
+| `--seed N` | `42` | RNG seed — deterministic output (so the two accounts match) |
+| `--today YYYY-MM-DD` | real today | anchor for relative dates (pin for byte-stable output) |
+| `--dry-run` | off | write the SQL and print stats; execute nothing |
 
-## Safety
+## Files
 
-`--reset` truncates live tables and is gated behind a typed schema-name confirmation. Without
-`--reset` the seeders **append**. Always `--dry-run` first against an unfamiliar target. The
-seeders only ever run read-only introspection plus the generated `INSERT`/`TRUNCATE`; they never
-touch the app-managed chat/ingestion tables.
+| File | Role |
+|---|---|
+| `seed_bronze.sh` | The seeder — generates the JSON and loads it into `BRONZE.*` (then prints the flatten + Gold steps). |
+| `seed_bronze.py` | Builds the graph + serializes each record with the mock API's serializers; emits the load SQL. `--selftest` asserts the JSON matches the flatten paths. |
+| `_seedlib.py` | The **generation engine** (`build_rows`) shared with the mock API (`../../mock_api/dataset.py`) — one generator, so the two paths can never drift. |
+| `profiles_omnihr.json` / `profiles_harvest.json` | Per-source column profiles (row counts + API-realistic value rules). The maintained artifacts — edit these when an API changes. |
+
+## How it works
+
+- **FK-coherent:** foreign keys are inferred from column names (+ an alias map) and drawn from real
+  parent rows; the whole graph is built in one pass, so cross-source keys
+  (`TIME_ENTRIES.EMPLOYEE_ID → EMPLOYEES`, etc.) always resolve.
+- **API-realistic:** the `profiles_*.json` map `TABLE.COLUMN` to a generator
+  (`choice`/`enumerate`/`int`/`float`/`date`/`bool`/`template`/`faker`) with values drawn from each
+  API's real fields/enums.
+- **Deterministic:** `SEED=42` gives reproducible data (and makes the DEMO and trial accounts match);
+  dates use relative tokens so the dashboard always covers the current period — pin `--today` to freeze them.
+
+The 5 **app-managed** tables are never seeded (the app writes them / the doc pipeline fills them):
+`CHAT_SESSIONS`, `CHAT_MESSAGES`, `DOCUMENT_CHUNKS`, `DOC_INGEST_LOG`, `COMPANY_KNOWLEDGE_BASE`.

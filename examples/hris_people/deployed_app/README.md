@@ -110,10 +110,6 @@ Bronze → Silver → Gold flow as Path A — just fed from files instead of HTT
 4. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
 5. Load the documents + deploy the app (below).
 
-> **Quick shortcut** (skips Bronze): seed Silver directly with
-> `src/seeders/seed_omnihr.sh` + `seed_harvest.sh --schema SILVER` — faster for a data refresh, but
-> it doesn't demonstrate the raw→flatten step. Use Path B above when you want the full medallion.
-
 ### Deploy the app + load the documents
 
 - **App** — on a **fresh account** (trial), run `src/deploy_app.sql` (creates the Git repository

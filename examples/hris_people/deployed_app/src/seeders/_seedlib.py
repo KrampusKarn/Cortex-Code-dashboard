@@ -1,33 +1,23 @@
 #!/usr/bin/env python3
-"""Structure-driven, FK-aware synthetic data engine for the DASHBOARD_SPS app.
+"""Structure-driven, FK-aware synthetic data ENGINE for the DASHBOARD_SPS app.
 
-Unlike the kit's spec-driven templates/generator/generate_seed.py, this reads the
-ACTUAL live table structure from Snowflake (INFORMATION_SCHEMA + SHOW PRIMARY KEYS),
-so it adapts automatically as the schema changes. It is invoked once per data
-source (OmniHR / Harvest) with that source's table list + a column
-"profile" that encodes API-realistic values. Output is a .sql file of
-INSERT statements (run by the per-source bash wrapper via `snow sql -f`); this
-module never writes to Snowflake itself, only reads (introspection + parent keys).
+The one generator behind both data paths: the mock API (`../../mock_api/dataset.py`)
+and the offline Bronze seeder (`seed_bronze.py`) both call `build_rows()` with the
+same profiles, so the data they produce can never drift. Given a table structure +
+a column "profile" (API-realistic values), it generates FK-coherent rows in memory —
+it never touches Snowflake.
 
-  introspect  ->  INFORMATION_SCHEMA.COLUMNS + SHOW PRIMARY KEYS (via `snow ... --format json`)
-  resolve FKs ->  column name / alias map -> parent table.pk (parents read live from DB
-                  when they belong to another source, so sources stay decoupled)
+  resolve FKs ->  column name / alias map -> parent table.pk
   generate    ->  per-PK sequential ids, FK values drawn from real parents, profile or
                   type-default values for the rest
-  emit        ->  [optional TRUNCATE] + batched INSERTs to --out
 
 Faker is the only third-party dependency (already in requirements.txt).
 """
 from __future__ import annotations
 
-import argparse
-import json
 import random
 import re
-import subprocess
-import sys
 from datetime import date, datetime, timedelta
-from pathlib import Path
 
 from faker import Faker
 
@@ -55,63 +45,6 @@ FK_ALIASES = {
 # BUSINESS_UNITS.HEAD_USER_ID -> EMPLOYEES while EMPLOYEES.BUSINESS_UNIT_ID -> BUSINESS_UNITS)
 # would push a parent after its child and leave the hard FK NULL.
 SOFT_FK_COLS = {"MANAGER_ID", "HEAD_USER_ID", "ASSIGNED_TO", "CREATED_BY"}
-
-
-# ── snow CLI helpers (read-only) ──────────────────────────────────────────────
-def snow_json(conn: str, query: str) -> list[dict]:
-    """Run one read-only query via the snow CLI and return rows as list[dict]."""
-    proc = subprocess.run(
-        ["snow", "sql", "-c", conn, "--format", "json", "-q", query],
-        capture_output=True, text=True,
-    )
-    if proc.returncode != 0:
-        sys.stderr.write(proc.stdout + "\n" + proc.stderr + "\n")
-        raise SystemExit(f"snow query failed: {query[:80]}...")
-    out = proc.stdout.strip()
-    if not out:
-        return []
-    data = json.loads(out)
-    return data if isinstance(data, list) else [data]
-
-
-def _ci(row: dict, *names):
-    """Case-insensitive column lookup (INFORMATION_SCHEMA upper, SHOW lower)."""
-    low = {k.lower(): v for k, v in row.items()}
-    for n in names:
-        if n.lower() in low:
-            return low[n.lower()]
-    return None
-
-
-def introspect(conn: str, db: str, schema: str, tables: list[str]) -> tuple[dict, dict]:
-    """Return (columns_by_table, pk_by_table). columns: name/type/len/scale/nullable/identity."""
-    in_list = ", ".join("'" + t + "'" for t in tables)
-    rows = snow_json(conn, f"""
-        SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH,
-               NUMERIC_PRECISION, NUMERIC_SCALE, IS_NULLABLE, IS_IDENTITY, ORDINAL_POSITION
-        FROM {db}.INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME IN ({in_list})
-        ORDER BY TABLE_NAME, ORDINAL_POSITION
-    """)
-    cols: dict[str, list] = {t: [] for t in tables}
-    for r in rows:
-        t = _ci(r, "TABLE_NAME")
-        cols.setdefault(t, []).append({
-            "name": _ci(r, "COLUMN_NAME"),
-            "type": (_ci(r, "DATA_TYPE") or "TEXT").upper(),
-            "len": _ci(r, "CHARACTER_MAXIMUM_LENGTH"),
-            "scale": _ci(r, "NUMERIC_SCALE"),
-            "nullable": (_ci(r, "IS_NULLABLE") or "YES").upper() == "YES",
-            "identity": (_ci(r, "IS_IDENTITY") or "NO").upper() == "YES",
-        })
-    # PKs for the WHOLE schema (not just targets) so cross-source FKs resolve —
-    # e.g. HARVEST_USERS.EMPLOYEE_ID -> EMPLOYEES even when seeding only Harvest.
-    pk_rows = snow_json(conn, f"SHOW PRIMARY KEYS IN SCHEMA {db}.{schema}")
-    pk: dict[str, str] = {}
-    for r in pk_rows:
-        if int(_ci(r, "key_sequence") or 1) == 1:
-            pk[_ci(r, "table_name")] = _ci(r, "column_name")
-    return cols, pk
 
 
 # ── relative date tokens ("today", "-5y", "+12m", "-90d") ─────────────────────
@@ -210,20 +143,6 @@ def gen_default(col: dict, today: date):
     return fake.sentence(nb_words=10)[:n]
 
 
-# ── SQL literal formatting (mirrors templates/render.py:sql_literal) ──────────
-_NUMERIC = ("NUMBER", "INT", "FLOAT", "DECIMAL", "DOUBLE", "REAL", "NUMERIC")
-
-
-def sql_literal(value, col_type: str) -> str:
-    if value is None or value == "":
-        return "NULL"
-    if isinstance(value, bool):
-        return "TRUE" if value else "FALSE"
-    if any(k in col_type.upper() for k in _NUMERIC):
-        return str(value)
-    return "'" + str(value).replace("'", "''") + "'"
-
-
 # ── ordering ──────────────────────────────────────────────────────────────────
 def order_targets(targets: list[str], fk_edges: dict) -> list[str]:
     """Topologically order target tables by intra-target FK edges (external parents ignored)."""
@@ -256,14 +175,14 @@ def resolve_fk(table: str, col: str, pk_index: dict) -> str | None:
     return f"{owners[0]}.{col}" if len(owners) == 1 else None
 
 
-# ── core generation (shared by the seeders and the mock API) ──────────────────
+# ── core generation (shared by the mock API and the offline Bronze seeder) ────
 def build_rows(cols, pk, targets, profile, default_rows=50, today=None,
                fetch_external=None):
     """Generate FK-coherent synthetic rows for `targets`. Pure: never writes to DB.
 
-    ONE generation engine, two callers: the seeders feed structure from
-    introspect() (live), the mock API feeds it from a parsed schema — so the
-    data shape can never drift between "load into Snowflake" and "serve over HTTP".
+    ONE generation engine, two callers: the mock API (serve over HTTP) and the
+    offline Bronze seeder (load into Snowflake) both feed structure from the parsed
+    schema (mock_api/schema.py reads 00_setup.sql) — so the data shape can never drift.
 
       cols/pk        : {table: [col dicts]} / {table: pk_col}. The whole schema is
                        fine — FK inference indexes every pk; only `targets` are built.
@@ -365,74 +284,3 @@ def build_rows(cols, pk, targets, profile, default_rows=50, today=None,
             rows_out.append(row)
         data[t] = rows_out
     return order, data
-
-
-# ── main generation (seeder CLI) ──────────────────────────────────────────────
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Structure-driven synthetic data generator (one source).")
-    ap.add_argument("--connection", required=True)
-    ap.add_argument("--database", required=True)
-    ap.add_argument("--schema", required=True)
-    ap.add_argument("--tables", required=True, help="comma-separated table list for this source")
-    ap.add_argument("--profile", required=True, help="path to the source's column-profile JSON")
-    ap.add_argument("--out", required=True, help="output .sql path")
-    ap.add_argument("--rows", type=int, default=50, help="default rows per table (profile can override)")
-    ap.add_argument("--reset", action="store_true", help="emit TRUNCATE before INSERTs")
-    ap.add_argument("--seed", type=int, default=42)
-    args = ap.parse_args()
-
-    random.seed(args.seed)
-    Faker.seed(args.seed)
-    today = date.today()
-
-    targets = [t.strip() for t in args.tables.split(",") if t.strip()]
-    profile = json.loads(Path(args.profile).read_text())
-
-    cols, pk = introspect(args.connection, args.database, args.schema, targets)
-    missing = [t for t in targets if not cols.get(t)]
-    if missing:
-        raise SystemExit(f"tables not found in {args.database}.{args.schema}: {missing}")
-
-    def fetch_external(parent_fqcol: str):
-        """Cross-source parent keys, read live from the DB (seeder mode)."""
-        _ptable, pcol = parent_fqcol.split(".")
-        rows = snow_json(
-            args.connection,
-            f"SELECT {pcol} AS K FROM {args.database}.{args.schema}.{_ptable}")
-        return [r.get("K") for r in rows if r.get("K") is not None]
-
-    order, data = build_rows(cols, pk, targets, profile, args.rows, today, fetch_external)
-
-    out_parts: list[str] = [
-        "-- Generated by _seedlib.py — synthetic data for ONE source. Do not hand-edit.",
-        f"-- target: {args.database}.{args.schema}  tables: {len(targets)}  seed: {args.seed}",
-        "USE ROLE ACCOUNTADMIN;",
-        f"USE SCHEMA {args.database}.{args.schema};",
-        "",
-    ]
-    if args.reset:
-        out_parts.append("-- reset: wipe target tables before reload")
-        for t in reversed(order):
-            out_parts.append(f"TRUNCATE TABLE IF EXISTS {t};")
-        out_parts.append("")
-
-    for t in order:
-        tcols = cols[t]
-        rows_out = data[t]
-        colnames = [c["name"] for c in tcols]
-        types = {c["name"]: c["type"] for c in tcols}
-        out_parts.append(f"-- {t}: {len(rows_out)} rows")
-        for start in range(0, len(rows_out), 500):
-            chunk = rows_out[start:start + 500]
-            values = ",\n".join(
-                "    (" + ", ".join(sql_literal(r.get(c), types[c]) for c in colnames) + ")"
-                for r in chunk)
-            out_parts.append(f"INSERT INTO {t} ({', '.join(colnames)}) VALUES\n{values};")
-        out_parts.append("")
-
-    Path(args.out).write_text("\n".join(out_parts), encoding="utf-8")
-    print(f"✓ wrote {args.out}  ({len(order)} tables, order: {', '.join(order)})")
-
-
-if __name__ == "__main__":
-    main()
