@@ -21,9 +21,15 @@ semantic view + the document Search are step ③ (`cortex-analyst-search`); depl
 (`dashboard-compose`). The **7ptrial** path does not use this skill — it loads Bronze from the seeder and
 runs the committed `src/03→04.sql` as-is (`trial-seed-bronze`).
 
-# The review hook (apply to EVERY layer)
+# The review hook (apply to EVERY layer — Bronze, Silver, AND Gold)
 
-For each of the three layers, follow this loop — never run a layer's SQL before the presenter approves it:
+**There are three separate stops — Bronze, then Silver, then Gold — each its own review.** Do exactly one
+layer at a time: generate it, run the loop below, and only after it is approved and run do you generate the
+**next** layer and stop again. Never generate or run Silver and Gold together, and never run a layer the user
+has not explicitly picked **1) Run it** for. (Silver is the one most worth reviewing — its typed columns and
+the nested flatten paths are what the presenter most wants to control.)
+
+For each layer, follow this loop — never run a layer's SQL before the presenter approves it:
 
 1. **Generate** the layer file into `examples/hris_people/deployed_app/build/` (`bronze.sql`, then
    `silver.sql`, then `gold.sql`).
