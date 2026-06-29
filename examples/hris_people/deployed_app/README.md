@@ -92,21 +92,27 @@ machine; pass `--connection <your-demo-connection>` on every `snow` command.
 7. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
 8. Deploy the app + load the documents (see **Deploy** below).
 
-### Path B — trial account + seeders (direct load)
+### Path B — trial account + offline Bronze load (full medallion, no EAI)
 
-Connection `<your trial Snowflake account>`. Trial accounts can't use external-access integrations, so skip the mock API
-and Bronze entirely and seed Silver directly.
+Trial accounts can't use an External Access Integration, so instead of pulling the mock API over a
+tunnel, generate the **same JSON locally** and load it straight into Bronze. Same
+Bronze → Silver → Gold flow as Path A — just fed from files instead of HTTP. Pass
+`--connection <your-trial-connection>` on every command.
 
 1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables.
-2. `src/03_silver.sql` — creates the Silver schema + typed tables (its flatten procedure is unused here).
-3. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
-4. Seed Silver directly (OmniHR + Harvest):
+2. `src/03_silver.sql` — Silver schema + typed tables + `SP_BUILD_SILVER` (the flatten proc).
+3. Load Bronze (the offline twin of `SP_INGEST_ALL_BRONZE`), then flatten to Silver:
    ```bash
-   cd src/seeders
-   ./seed_omnihr.sh  --connection <your-trial-connection> --schema SILVER --reset
-   ./seed_harvest.sh --connection <your-trial-connection> --schema SILVER --reset
+   cd mock_api && ./seed_bronze.sh --connection <your-trial-connection>
+   # then (the loader prints these):
+   snow sql -c <your-trial-connection> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
    ```
+4. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
 5. Load the documents + deploy the app (below).
+
+> **Quick shortcut** (skips Bronze): seed Silver directly with
+> `src/seeders/seed_omnihr.sh` + `seed_harvest.sh --schema SILVER` — faster for a data refresh, but
+> it doesn't demonstrate the raw→flatten step. Use Path B above when you want the full medallion.
 
 ### Deploy the app + load the documents
 

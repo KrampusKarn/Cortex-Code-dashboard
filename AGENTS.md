@@ -67,8 +67,9 @@ in a Workspace (it needs the `snow` CLI and client-side `PUT`).
   templated render → deploy flow, render your own example with `render.py`.
   **To run the hris_people demo itself** (live medallion + dashboard + the two Cortex assistants),
   follow `examples/hris_people/deployed_app/README.md` → *Running the demo*: **Path A** (DEMO
-  account + mock API → Bronze→Silver→Gold) or **Path B** (trial account + seeders → Silver direct).
-  The ordered SQL is in `deployed_app/src/` (`00`→`05`); `src/README.md` has the run table.
+  account + mock API → Bronze→Silver→Gold) or **Path B** (trial account + `mock_api/seed_bronze.sh`
+  offline Bronze load → same Silver→Gold, no External Access). Both land in Bronze then run the same
+  `SP_BUILD_SILVER`. The ordered SQL is in `deployed_app/src/` (`00`→`05`); `src/README.md` has the run table.
 
 ## Guardrails
 
