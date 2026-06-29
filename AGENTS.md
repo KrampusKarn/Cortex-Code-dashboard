@@ -65,6 +65,10 @@ in a Workspace (it needs the `snow` CLI and client-side `PUT`).
   medallion), captured from the live account. Do NOT run `render.py` against it or treat
   `schema_spec.json`/`kb_content.json` there as live — they are lineage only. To exercise the
   templated render → deploy flow, render your own example with `render.py`.
+  **To run the hris_people demo itself** (live medallion + dashboard + the two Cortex assistants),
+  follow `examples/hris_people/deployed_app/README.md` → *Running the demo*: **Path A** (DEMO
+  account + mock API → Bronze→Silver→Gold) or **Path B** (trial account + seeders → Silver direct).
+  The ordered SQL is in `deployed_app/src/` (`00`→`05`); `src/README.md` has the run table.
 
 ## Guardrails
 

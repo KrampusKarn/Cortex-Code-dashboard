@@ -72,19 +72,25 @@ The app and both assistants deploy straight from the public repo
 aren't available in your region, run `ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';`.
 Run all SQL as `ACCOUNTADMIN`; every script is idempotent.
 
-### Path A — Snowflake account + mock API (medallion ELT)
+### Path A — DEMO account + mock API (medallion ELT)
 
-Connection `<your snowflake account>`. Demonstrates the live Extract → Bronze → Silver → Gold flow.
+Demonstrates the live Extract → Bronze → Silver → Gold flow. The mock API + tunnel run on your
+machine; pass `--connection <your-demo-connection>` on every `snow` command.
 
-1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables.
-2. Start the API + tunnel: `cd mock_api && ./serve_eai.sh start` (ngrok static domain; add
-   `--set-rule` the first time to pin the network rule to your domain).
-3. `src/02_bronze.sql` — Bronze/Silver/Gold schemas, the external-access integration, and the
-   ingest procedures.
-4. Ingest: `CALL BRONZE.SP_INGEST_ALL_BRONZE('https://<your-domain>.ngrok-free.app');`
-5. `src/03_silver.sql`, then `CALL SILVER.SP_BUILD_SILVER();`
-6. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
-7. Load the documents + deploy the app (see **Deploy** below).
+0. *(optional — for a clean "CoCo builds it from empty" run)* `src/reset_for_coco.sql` — drops the
+   `BRONZE`/`SILVER`/`GOLD` schemas (keeps the app, chat tables, Cortex Search, and docs).
+1. `src/00_setup.sql` — database, warehouses, PUBLIC schema, chat + document tables (idempotent).
+2. Start the API + tunnel on your machine: `cd mock_api && ./serve_eai.sh start`.
+3. `src/02_bronze.sql` — creates `BRONZE`/`SILVER`/`GOLD`, the external-access integration, the
+   network rule, and the ingest procedures.
+4. Point the network rule at your tunnel: `./serve_eai.sh start --set-rule`. Needed the first time
+   and **after any reset** (`02_bronze` recreates the rule with a placeholder host); skip only if
+   the rule already points at your stable ngrok domain.
+5. Ingest: `CALL BRONZE.SP_INGEST_ALL_BRONZE('https://<your-domain>');` — use the exact URL
+   `serve_eai.sh` printed.
+6. `src/03_silver.sql`, then `CALL SILVER.SP_BUILD_SILVER();`
+7. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
+8. Deploy the app + load the documents (see **Deploy** below).
 
 ### Path B — trial account + seeders (direct load)
 
