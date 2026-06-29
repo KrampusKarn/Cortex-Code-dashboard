@@ -36,23 +36,33 @@ The **7ptrial** (trial / no-EAI) path skips this skill entirely and uses `trial-
 
 ## 1. Read the live API surface
 
+> **Fetch with `curl` (raw HTTP via `run_shell_command`) — NOT a web-page / "read this URL" tool, and NOT
+> `localhost`.** These endpoints return **JSON**, which an HTML content-reader mangles or refuses; and a free
+> `*.ngrok-free.*` domain serves an HTML browser-warning interstitial to browser-like clients. Always send the
+> `ngrok-skip-browser-warning` header + a non-browser `User-Agent` (the same trick `SP_INGEST_BRONZE` uses) so
+> you get the JSON body, not HTML. Extract from the **live tunnel URL**, not localhost — localhost samples
+> don't demonstrate the live extraction.
+
 ```bash
-BASE="https://<your-tunnel-host>"          # the URL serve_eai.sh printed
-curl -s "$BASE/openapi.json"  > build/openapi.json      # the full schema
-curl -s "$BASE/"                                          # endpoint index + row counts
+BASE="https://<your-tunnel-host>"        # the live ngrok/cloudflare URL serve_eai.sh printed (NOT localhost)
+H=(-H 'ngrok-skip-browser-warning: true' -H 'User-Agent: cortex-extract')
+curl -s "${H[@]}" "$BASE/openapi.json" > build/openapi.json   # the full schema (JSON)
+curl -s "${H[@]}" "$BASE/"                                      # endpoint index + row counts
 ```
 
 - The mock API exposes **33 endpoints, one per entity** — 18 OmniHR (`/api/v1/...`, DRF envelope
   `{count,next,previous,results}`) and 15 Harvest (`/v2/...`, envelope `{<resource>:[...], pagination}`).
-- If the agent cannot make outbound HTTP, fall back to **landing a sample into Bronze first** (a one-page
-  `SP_INGEST_BRONZE` call) and inspecting `SELECT PAYLOAD FROM BRONZE.<t> LIMIT 1` — the VARIANT *is* the
-  raw schema. Either source yields the same map.
+- **If a fetch still returns HTML** (an interstitial, or the read-tool insists on parsing it as a page),
+  either switch to a Cloudflare quick tunnel (`serve_eai.sh --cloudflare`, no interstitial) **or** fall back
+  to **landing a sample into Bronze first** (a one-page `SP_INGEST_BRONZE` call — it sends the skip header
+  through Snowflake's egress) and inspect `SELECT PAYLOAD FROM BRONZE.<t> LIMIT 1`; the VARIANT *is* the raw
+  schema. Either source yields the same map.
 
 ## 2. Pull one sample page per endpoint → see the real JSON shape
 
 ```bash
-curl -s "$BASE/api/v1/employees?page=1&page_size=3"     # OmniHR, NESTED headline resource
-curl -s "$BASE/v2/time_entries?per_page=3"               # Harvest,  NESTED headline resource
+curl -s "${H[@]}" "$BASE/api/v1/employees?page=1&page_size=3"   # OmniHR, NESTED headline resource
+curl -s "${H[@]}" "$BASE/v2/time_entries?per_page=3"            # Harvest, NESTED headline resource
 ```
 
 Most endpoints are **flat snake_case**. Two headline resources are **nested** so the

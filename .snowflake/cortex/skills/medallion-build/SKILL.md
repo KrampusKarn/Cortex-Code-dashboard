@@ -29,10 +29,17 @@ For each of the three layers, follow this loop — never run a layer's SQL befor
    `silver.sql`, then `gold.sql`).
 2. **Present** a tight summary: what schemas/tables/views it creates, the column→type→json_path decisions
    that matter (especially the nested flatten paths), and the file path to open.
-3. **STOP and wait** for an explicit go-ahead. Ask: *"Review `build/<layer>.sql` — run it, or revise?"*
-4. **On approve** → run it against `sevenpeaks_partner_demo`, show the result (row counts / object list), then
-   move to the next layer. **On revise** → take the feedback, regenerate just this layer, and re-present.
-   Do not advance until the current layer is approved (Silver needs Bronze; Gold needs Silver).
+3. **STOP and offer explicit numbered choices.** End the message with this menu, then wait — do not run
+   anything yet:
+   > **Review `build/<layer>.sql`. Reply with:**
+   > **1) Run it** · **2) Revise** (tell me what to change) · **3) Show full SQL** · **4) Skip this layer**
+4. **Act on the reply.** `1` → run it against `sevenpeaks_partner_demo`, show the result (row counts / object
+   list), advance to the next layer. `2` → edit just this layer's file per the feedback, then re-present the
+   menu. `3` → print the full file, then re-present the menu. `4` → skip it (state the consequence). Never
+   advance until the current layer is approved — Silver needs Bronze, Gold needs Silver.
+
+(Cortex Code skills can't render buttons; the menu is plain text and the user replies in chat. Always present
+the numbered options rather than deciding for them.)
 
 # Prerequisites
 
@@ -56,7 +63,7 @@ Generate `build/bronze.sql` from the map:
 - `BRONZE.SP_INGEST_BRONZE` (paginated pull → `BRONZE.<table>(PAYLOAD VARIANT, _SOURCE, _PATH, _LOADED_AT)`)
   and `BRONZE.SP_INGEST_ALL_BRONZE(BASE_URL)` (loops the registry). See `references/layer_patterns.md`.
 
-**Review hook.** On approve, run `build/bronze.sql`, then point the rule at the live host and ingest:
+**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/bronze.sql`, then point the rule at the live host and ingest:
 ```sql
 ALTER NETWORK RULE BRONZE.OMNI_HARVEST_EGRESS SET VALUE_LIST = ('<your-tunnel-host>');
 CALL BRONZE.SP_INGEST_ALL_BRONZE('https://<your-tunnel-host>');
@@ -75,7 +82,7 @@ Generate `build/silver.sql` from the map:
 - `SILVER.SP_FLATTEN(TABLE_NAME)` (builds `INSERT OVERWRITE … SELECT PAYLOAD:<path>::<type> AS <col>` from
   INFORMATION_SCHEMA + the field-map; skips empty Bronze) and `SILVER.SP_BUILD_SILVER()` (loops the registry).
 
-**Review hook.** On approve, run `build/silver.sql`, then:
+**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/silver.sql`, then:
 ```sql
 CALL SILVER.SP_BUILD_SILVER();
 SELECT EMPLOYEE_ID, FIRST_NAME, EMAIL, TITLE, DEPARTMENT FROM SILVER.EMPLOYEES ORDER BY EMPLOYEE_ID LIMIT 5;
@@ -93,7 +100,7 @@ Generate `build/gold.sql`:
   `LEAVE_SUMMARY`, …). Match the view names in `src/04_gold.sql` — the committed `app/streamlit_app.py`
   queries them by name.
 
-**Review hook.** On approve, run `build/gold.sql`, then spot-check
+**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/gold.sql`, then spot-check
 `SELECT * FROM GOLD.EMPLOYEE_360 LIMIT 5;`. When Gold is approved, hand off to **`cortex-analyst-search`**
 (step ③) for the semantic view + document Search, then **`dashboard-compose`** (step ④) to deploy the app.
 
