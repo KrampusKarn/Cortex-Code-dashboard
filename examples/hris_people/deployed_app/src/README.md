@@ -13,7 +13,7 @@ from the mock API, which needs an external-access integration).
 
 | Order | File | Creates |
 |---|---|---|
-| 1 | `00_setup.sql` | Warehouses, database, schema, stages, and the base tables (empty), incl. the chat + document tables. |
+| 1 | `00_setup.sql` | The PUBLIC **app/RAG layer only**: warehouses, database, schema, the `COMPANY_DOCS` stage, and the 4 chat/document tables. (Entity DDL lives in SILVER — step 2.) |
 | 2 | `03_silver.sql` | The **Silver** schema + typed entity tables (the read source for Gold). |
 | 3 | **Load Bronze → flatten to Silver — pick A or B** (both end the same way) | |
 | 3·A | `02_bronze.sql` → `CALL BRONZE.SP_INGEST_ALL_BRONZE(<url>)` → `CALL SILVER.SP_BUILD_SILVER()` | **Live API ingest (DEMO).** Extract the mock API into Bronze VARIANT over the tunnel, then flatten. Start the API with `../mock_api/serve_eai.sh start` (see [`mock_api/README.md`](../mock_api/README.md)). |

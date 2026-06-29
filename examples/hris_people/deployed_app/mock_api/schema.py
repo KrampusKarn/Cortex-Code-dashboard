@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Parse the live DDL (../src/00_setup.sql) into the (cols, pk) structures that
+"""Parse the entity DDL (../src/03_silver.sql) into the (cols, pk) structures that
 _seedlib.build_rows() expects — so the mock API needs NO Snowflake connection to
-boot, yet stays in lockstep with the real schema (00_setup.sql was captured from
-the live account via GET_DDL).
+boot, yet stays in lockstep with the real schema. SILVER owns the entity table DDL
+(the dashboard reads GOLD ← SILVER); PUBLIC holds only the app/RAG tables, so the
+generator reads its table structures from 03_silver.sql.
 
 Returns the column-dict shape _seedlib.build_rows() expects:
     cols[TABLE] = [{name, type, len, scale, nullable, identity}, ...]
@@ -14,10 +15,13 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-SETUP_SQL = Path(__file__).resolve().parent.parent / "src" / "00_setup.sql"
+SILVER_SQL = Path(__file__).resolve().parent.parent / "src" / "03_silver.sql"
 
+# Matches `CREATE TABLE IF NOT EXISTS [SCHEMA.]<TABLE> ( ... \n);` — the optional
+# schema prefix lets this read SILVER.<T> (03_silver) or bare <T>. The single-line
+# config table (CREATE OR REPLACE TABLE SILVER.SILVER_FIELD_MAP (...);) never matches.
 _TABLE = re.compile(
-    r"CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\n\);",
+    r"CREATE TABLE IF NOT EXISTS\s+(?:\w+\.)?(\w+)\s*\((.*?)\n\);",
     re.DOTALL | re.IGNORECASE,
 )
 _PK = re.compile(r"primary key\s*\(\s*(\w+)\s*\)", re.IGNORECASE)
@@ -62,7 +66,7 @@ def _parse_body(body: str):
     return cols, pk
 
 
-def load_schema(path: Path = SETUP_SQL):
+def load_schema(path: Path = SILVER_SQL):
     """Return (cols_by_table, pk_by_table) for every CREATE TABLE in the DDL."""
     text = Path(path).read_text(encoding="utf-8")
     cols: dict[str, list] = {}

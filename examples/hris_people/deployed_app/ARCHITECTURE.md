@@ -15,7 +15,7 @@ Cortex Search service stay in `PUBLIC`. The read schema is the single `SCH` cons
 "Porting to Production" below, so the app can be lifted to prod and re-pointed at real
 API-sourced tables by editing those constants.
 
-> **Authoritative structure:** the live tables are defined in [`src/00_setup.sql`](src/00_setup.sql); synthetic data is loaded per source by [`src/seeders/`](src/seeders/) (OmniHR / Harvest). The table inventory below is illustrative and may lag the live schema.
+> **Authoritative structure:** the entity tables are defined in [`src/03_silver.sql`](src/03_silver.sql) (SILVER, the dashboard's source via GOLD); PUBLIC's app/RAG tables are in [`src/00_setup.sql`](src/00_setup.sql). Synthetic data is loaded into Bronze by [`src/seeders/seed_bronze.sh`](src/seeders/) (or the API ingest), then flattened to SILVER. The table inventory below is illustrative and may lag the live schema.
 
 ---
 
@@ -25,7 +25,7 @@ API-sourced tables by editing those constants.
 - **Database**: `DEMO_EMPLOYEE_APP` (region `AWS_AP_SOUTH_1`) — app reads `GOLD`; chat + Cortex Search in `PUBLIC`
 - **Streamlit App**: `DEMO_EMPLOYEE_APP.PUBLIC.DASHBOARD_SPS`
 - **Warehouses (two, by design)**: `DEMO_EMPLOYEE_APP` (app `query_warehouse`) and `DEMO_WH` (Cortex Search + document-ingestion tasks)
-- **Source Stage**: `@DEMO_EMPLOYEE_APP.PUBLIC.STREAMLIT_STAGE`
+- **Deploy**: `snow streamlit deploy` (from `app/`) or `src/deploy_app.sql` (from the git stage) — see `README.md`
 
 ---
 
@@ -39,7 +39,7 @@ source), **docs** (RAG corpus):
 | `app/streamlit_app.py` | **The running app (monolith)** — exactly what the Streamlit runtime executes. Edit it directly. |
 | `app/environment.yml` | Conda dependencies (Python 3.11, Streamlit, snowflake-snowpark-python, pandas, altair) |
 | `app/snowflake.yml` | Redeploy descriptor targeting the existing app object (`DASHBOARD_SPS`) |
-| `src/00_setup.sql` | From-scratch infra + all 38 tables |
+| `src/00_setup.sql` | PUBLIC app/RAG layer only — warehouses, db, schema, `COMPANY_DOCS` stage, and the 4 chat/document tables (entity DDL lives in `03_silver.sql`) |
 | `src/01_document_ingestion.sql` | RAG chat backend (`COMPANY_KB_SEARCH` over `DOCUMENT_CHUNKS`) |
 | `src/02_bronze.sql` … `05_semantic_analyst.sql` | Bronze→Silver→Gold ELT + the `GOLD.HR_ANALYST` semantic view |
 | `src/seeders/` | The offline Bronze seeder (`seed_bronze.sh`) — loads both sources into `BRONZE.*`, the no-EAI twin of the API ingest |
@@ -142,7 +142,7 @@ Used by the RAG Company Knowledge Assistant in the Overview tab to retrieve top-
 
 ## Stored procedures
 
-The backend comes entirely from `src/`: [`00_setup.sql`](src/00_setup.sql) (tables),
+The backend comes entirely from `src/`: [`00_setup.sql`](src/00_setup.sql) (PUBLIC app/RAG tables),
 [`01_document_ingestion.sql`](src/01_document_ingestion.sql) (the chat backend), the `02`→`05`
 medallion, and [`src/seeders/`](src/seeders/) (synthetic data). The app is the single committed
 `app/streamlit_app.py` monolith, deployed with `snow streamlit deploy` or

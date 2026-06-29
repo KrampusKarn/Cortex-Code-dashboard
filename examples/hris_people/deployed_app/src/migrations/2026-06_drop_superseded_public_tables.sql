@@ -5,19 +5,19 @@
 -- to the GOLD medallion layer (GOLD ← SILVER). The 35 business data tables that
 -- used to live in PUBLIC are now stale duplicates of the SILVER tables the
 -- medallion builds from the API — nothing reads them anymore — so they are dropped.
--- Also drops the no-longer-indexed COMPANY_KNOWLEDGE_BASE and two leftover load
--- stages from an old PUT-based seeding approach.
+-- Also drops the no-longer-indexed COMPANY_KNOWLEDGE_BASE and the leftover load /
+-- artifact stages (DEMO_SEED_STAGE, TABLE_DATA, STREAMLIT_STAGE) that the current
+-- deploy no longer uses.
 --
 -- DESTRUCTIVE. Run as ACCOUNTADMIN, only on an account that still has the old
 -- PUBLIC data tables. KEPT in PUBLIC (NOT dropped): the app + assistants
 -- infrastructure — CHAT_SESSIONS, CHAT_MESSAGES, DOCUMENT_CHUNKS, DOC_INGEST_LOG,
 -- COMPANY_DOCS (stage/stream/tasks), SP_REBUILD_DOC_CHUNKS, COMPANY_KB_SEARCH,
--- STREAMLIT_STAGE and the Streamlit app.
+-- and the Streamlit app.
 --
--- DEFERRED (the "fix later"): so fresh accounts come up clean too, 00_setup.sql
--- should stop creating the 35 data tables in PUBLIC (SILVER owns that DDL) and the
--- seeders should write SILVER instead of PUBLIC. Until then this migration cleans
--- an already-built account.
+-- Fresh builds already come up clean: 00_setup.sql now creates only the PUBLIC
+-- app/RAG layer (SILVER owns the entity DDL, seed_bronze.sh loads BRONZE). This
+-- migration only converges an account that was built before that slim.
 -- =====================================================================
 USE ROLE ACCOUNTADMIN;
 USE DATABASE DEMO_EMPLOYEE_APP;
@@ -63,9 +63,10 @@ DROP TABLE IF EXISTS PUBLIC.UTILIZATION;
 -- ── Old curated KB table (no longer indexed; Search uses DOCUMENT_CHUNKS) ──
 DROP TABLE IF EXISTS PUBLIC.COMPANY_KNOWLEDGE_BASE;
 
--- ── Leftover load stages from an old PUT-based seeding approach ───────
-DROP STAGE IF EXISTS PUBLIC.DEMO_SEED_STAGE;
-DROP STAGE IF EXISTS PUBLIC.TABLE_DATA;
+-- ── Leftover stages the current deploy no longer uses ────────────────
+DROP STAGE IF EXISTS PUBLIC.DEMO_SEED_STAGE;   -- old PUT-based CSV seeding
+DROP STAGE IF EXISTS PUBLIC.TABLE_DATA;        -- old data dump
+DROP STAGE IF EXISTS PUBLIC.STREAMLIT_STAGE;   -- old app-artifact stage (deploy now uses the git stage / snow CLI)
 
 -- =====================================================================
 -- VERIFY (PUBLIC should now hold only app + assistants objects):

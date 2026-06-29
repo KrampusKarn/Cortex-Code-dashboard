@@ -93,7 +93,7 @@ tokens so the data always covers the current period — pin with `MOCK_TODAY=202
 |---|---|
 | `app.py` | FastAPI; builds the dataset once at startup; registers one list route per table |
 | `dataset.py` | Merges the seeder profiles + calls `_seedlib.build_rows` → in-memory graph |
-| `schema.py` | Parses `../src/00_setup.sql` → table structures (so no Snowflake connection is needed) |
+| `schema.py` | Parses `../src/03_silver.sql` → entity table structures (so no Snowflake connection is needed) |
 | `endpoints.py` | Path map (OmniHR `/api/v1/…`, Harvest `/v2/…`), envelopes, serializers |
 | `run.sh` / `requirements.txt` | Boot script + deps |
 
