@@ -5,6 +5,7 @@ tools:
 - read_file
 - write_file
 - run_shell_command
+- ask_user_question
 ---
 
 # When to Use
@@ -18,15 +19,16 @@ tools:
 
 This skill generates SQL into `build/` and runs it **only after you approve each layer**. The Cortex Analyst
 semantic view + the document Search are step ③ (`cortex-analyst-search`); deploying the app is step ④
-(`dashboard-compose`). The **7ptrial** path does not use this skill — it loads Bronze from the seeder and
-runs the committed `src/03→04.sql` as-is (`trial-seed-bronze`).
+(`dashboard-compose`). The **7ptrial** path normally skips this skill — `trial-seed-bronze` loads Bronze from
+the seeder and runs the committed `src/03→04.sql` as-is. But you **can** drive the Silver + Gold review hooks
+on a trial account too (Bronze pre-seeded by the seeder, no EAI needed) — see **Trial / offline mode** below.
 
 # The review hook (apply to EVERY layer — Bronze, Silver, AND Gold)
 
 **There are three separate stops — Bronze, then Silver, then Gold — each its own review.** Do exactly one
 layer at a time: generate it, run the loop below, and only after it is approved and run do you generate the
 **next** layer and stop again. Never generate or run Silver and Gold together, and never run a layer the user
-has not explicitly picked **1) Run it** for. (Silver is the one most worth reviewing — its typed columns and
+has not explicitly picked **Run it** for. (Silver is the one most worth reviewing — its typed columns and
 the nested flatten paths are what the presenter most wants to control.)
 
 For each layer, follow this loop — never run a layer's SQL before the presenter approves it:
@@ -35,21 +37,26 @@ For each layer, follow this loop — never run a layer's SQL before the presente
    `silver.sql`, then `gold.sql`).
 2. **Present** a tight summary: what schemas/tables/views it creates, the column→type→json_path decisions
    that matter (especially the nested flatten paths), and the file path to open.
-3. **STOP and offer explicit numbered choices.** End the message with this menu, then wait — do not run
-   anything yet:
-   > **Review `build/<layer>.sql`. Reply with:**
-   > **1) Run it** · **2) Revise** (tell me what to change) · **3) Show full SQL** · **4) Skip this layer**
-4. **Act on the reply.** `1` → run it against `sevenpeaks_partner_demo`, show the result (row counts / object
-   list), advance to the next layer. `2` → edit just this layer's file per the feedback, then re-present the
-   menu. `3` → print the full file, then re-present the menu. `4` → skip it (state the consequence). Never
-   advance until the current layer is approved — Silver needs Bronze, Gold needs Silver.
+3. **STOP and ask via the `ask_user_question` selection popup**, then wait — do not run anything yet. Present
+   exactly these four options (header `Review`, question `Review build/<layer>.sql — what next?`):
+   > **Run it** · **Revise** (tell me what to change) · **Show full SQL** · **Skip this layer**
+   The tool auto-appends a **"Something else"** free-form entry — that IS the fifth "tell Cortex Code what to
+   do" option, so never add it as a literal option (the tool treats it as redundant).
+4. **Act on the reply.** `Run it` → run it against the connection, show the result (row counts / object
+   list), advance to the next layer. `Revise` (or free-form via "Something else") → edit just this layer's
+   file per the feedback, then re-present the popup. `Show full SQL` → print the full file, then re-present
+   the popup. `Skip this layer` → skip it (state the consequence). Never advance until the current layer is
+   approved — Silver needs Bronze, Gold needs Silver.
 
-(Cortex Code skills can't render buttons; the menu is plain text and the user replies in chat. Always present
-the numbered options rather than deciding for them.)
+(Always present the four options via `ask_user_question` rather than deciding for them. If for any reason the
+selection tool is unavailable, fall back to the same four choices as a plain-text menu replied to in chat.)
 
 # Prerequisites
 
-1. `build/extraction_map.json` from `api-schema-extraction`.
+1. A schema map. Either `build/extraction_map.json` from `api-schema-extraction` (DEMO path), **or** — on a
+   trial account with no live API — an offline source: the seeded Bronze VARIANT itself
+   (`SELECT PAYLOAD FROM BRONZE.<t> LIMIT 1`) or `examples/hris_people/schema_spec.json` (its `api_field` is
+   the `json_path`, dotted for nested). See **Trial / offline mode**.
 2. The PUBLIC app/RAG layer exists: run `src/00_setup.sql` once (database `DEMO_EMPLOYEE_APP`, warehouses
    `DEMO_EMPLOYEE_APP` + `DEMO_WH`, schema, chat/document tables). For a clean "build from empty" demo, run
    `src/reset_for_coco.sql` first (drops only BRONZE/SILVER/GOLD; keeps PUBLIC + the app).
@@ -69,7 +76,7 @@ Generate `build/bronze.sql` from the map:
 - `BRONZE.SP_INGEST_BRONZE` (paginated pull → `BRONZE.<table>(PAYLOAD VARIANT, _SOURCE, _PATH, _LOADED_AT)`)
   and `BRONZE.SP_INGEST_ALL_BRONZE(BASE_URL)` (loops the registry). See `references/layer_patterns.md`.
 
-**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/bronze.sql`, then point the rule at the live host and ingest:
+**Review hook (present the `ask_user_question` popup, then wait).** On **Run it**, run `build/bronze.sql`, then point the rule at the live host and ingest:
 ```sql
 ALTER NETWORK RULE BRONZE.OMNI_HARVEST_EGRESS SET VALUE_LIST = ('<your-tunnel-host>');
 CALL BRONZE.SP_INGEST_ALL_BRONZE('https://<your-tunnel-host>');
@@ -88,7 +95,7 @@ Generate `build/silver.sql` from the map:
 - `SILVER.SP_FLATTEN(TABLE_NAME)` (builds `INSERT OVERWRITE … SELECT PAYLOAD:<path>::<type> AS <col>` from
   INFORMATION_SCHEMA + the field-map; skips empty Bronze) and `SILVER.SP_BUILD_SILVER()` (loops the registry).
 
-**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/silver.sql`, then:
+**Review hook (present the `ask_user_question` popup, then wait).** On **Run it**, run `build/silver.sql`, then:
 ```sql
 CALL SILVER.SP_BUILD_SILVER();
 SELECT EMPLOYEE_ID, FIRST_NAME, EMAIL, TITLE, DEPARTMENT FROM SILVER.EMPLOYEES ORDER BY EMPLOYEE_ID LIMIT 5;
@@ -106,9 +113,34 @@ Generate `build/gold.sql`:
   `LEAVE_SUMMARY`, …). Match the view names in `src/04_gold.sql` — the committed `app/streamlit_app.py`
   queries them by name.
 
-**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/gold.sql`, then spot-check
+**Review hook (present the `ask_user_question` popup, then wait).** On **Run it**, run `build/gold.sql`, then spot-check
 `SELECT * FROM GOLD.EMPLOYEE_360 LIMIT 5;`. When Gold is approved, hand off to **`cortex-analyst-search`**
 (step ③) for the semantic view + document Search, then **`dashboard-compose`** (step ④) to deploy the app.
+
+# Trial / offline mode (Bronze pre-seeded, no EAI)
+
+On the **7ptrial** connection you can still get the per-layer review demo for **Silver and Gold** — only the
+Bronze *ingest* needs an EAI, and `trial-seed-bronze` already lands Bronze offline. So:
+
+1. **Skip Layer 1 (Bronze).** Don't generate the EAI / network-rule / ingest SQL — the seeder loaded
+   `BRONZE.<entity>` already. Confirm with `SELECT PAYLOAD FROM BRONZE.EMPLOYEES LIMIT 1`.
+2. **Get the map offline** (no `api-schema-extraction`, no tunnel): derive it from the seeded Bronze VARIANT
+   (`SELECT PAYLOAD FROM BRONZE.<t> LIMIT 1` — the nested paths are right there), or read
+   `examples/hris_people/schema_spec.json` (`api_field` = the `json_path`, dotted for nested like
+   `department.name`).
+3. **Generate Layer 2 (Silver) then Layer 3 (Gold) with the same review hooks** — `build/silver.sql`, then
+   `build/gold.sql` — running each against `7ptrial` (as `ACCOUNTADMIN`) after approval. Silver's flatten is
+   data-driven, so it runs identically over the seeded Bronze.
+4. **Two kinds of Gold — handle them differently.** The **24 entity pass-throughs**
+   (`GOLD.<entity> AS SELECT * FROM SILVER.<entity>`) are pure *shape* — safe to derive fresh from the seeded
+   data. The **6 curated views** (`EMPLOYEE_360`, `HEADCOUNT_BY_DEPARTMENT`, `RECRUITMENT_FUNNEL`,
+   `UTILIZATION_MONTHLY`, `PROJECT_PROFITABILITY`, `LEAVE_SUMMARY`) and the **semantic view (`05`) + document
+   ingestion (`01`)** are hand-built *meaning* — multi-table joins/aggregations the app depends on by name,
+   which you cannot infer from row shape. Author those only by converging on `src/04_gold.sql` / `05` / `01`
+   (or run them as-is); don't free-derive, or the dashboard's hardcoded names/columns won't match and it goes
+   blank.
+
+Everything else (the `ask_user_question` review popup, idempotent SQL, matching the committed view names) is unchanged.
 
 # Best Practices
 

@@ -5,6 +5,7 @@ tools:
 - read_file
 - write_file
 - run_shell_command
+- ask_user_question
 ---
 
 # When to Use
@@ -22,15 +23,18 @@ as-is via `trial-seed-bronze`; this skill is the DEMO path's generate-then-revie
 
 # The review hook
 
-Same gate as `medallion-build`: generate → present a summary + the `build/` file path → **STOP and offer
-explicit numbered choices, then wait** (never decide for the user):
+Same gate as `medallion-build`: generate → present a summary + the `build/` file path → **STOP and ask via
+the `ask_user_question` selection popup, then wait** (never decide for the user). Present exactly these four
+options (header `Review`, question `Review build/<file>.sql — what next?`):
 
-> **Review `build/<file>.sql`. Reply with:**
-> **1) Run it** · **2) Revise** (tell me what to change) · **3) Show full SQL** · **4) Skip**
+> **Run it** · **Revise** (tell me what to change) · **Show full SQL** · **Skip**
 
-On `1` run it against `sevenpeaks_partner_demo`; `2` edit just that file and re-present the menu; `3` print the
-full file; `4` skip. The two assistants are independent — review them as two separate hooks (semantic view
-first or docs first, either order). (Skills can't render buttons; the menu is plain text replied to in chat.)
+The tool auto-appends a **"Something else"** free-form entry — that IS the fifth "tell Cortex Code what to do"
+option, so never add it as a literal option. On **Run it** run it against the connection; **Revise** (or the
+free-form "Something else") edit just that file and re-present the popup; **Show full SQL** print the full
+file; **Skip** skip. The two assistants are independent — review them as two separate hooks (semantic view
+first or docs first, either order). If the selection tool is unavailable, fall back to the same four choices
+as a plain-text menu replied to in chat.
 
 # Prerequisites
 
@@ -56,7 +60,7 @@ Generate `build/semantic.sql`: a `CREATE OR REPLACE SEMANTIC VIEW GOLD.HR_ANALYS
 - **DIMENSIONS** + **METRICS** with synonyms so plain English maps to the right joins/aggregations
   (`headcount`, `billable_pct`/utilization, `total_leave_days`, `avg_salary`, …).
 
-**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/semantic.sql`, then verify the view answers directly:
+**Review hook (present the `ask_user_question` popup, then wait).** On **Run it**, run `build/semantic.sql`, then verify the view answers directly:
 ```sql
 SELECT * FROM SEMANTIC_VIEW(GOLD.HR_ANALYST METRICS employees.headcount DIMENSIONS employees.department)
 ORDER BY headcount DESC;
@@ -74,7 +78,7 @@ Generate `build/document_search.sql` (in `PUBLIC`, on warehouse `DEMO_WH`):
 - `CORTEX SEARCH SERVICE COMPANY_KB_SEARCH ON CONTENT ATTRIBUTES TITLE, CATEGORY, FILE_NAME` over
   `DOCUMENT_CHUNKS` (embedding `snowflake-arctic-embed-m-v1.5`, short `TARGET_LAG`).
 
-**Review hook (present the numbered menu, then wait).** On **1) Run it**, run `build/document_search.sql`, then load the docs and build the index:
+**Review hook (present the `ask_user_question` popup, then wait).** On **Run it**, run `build/document_search.sql`, then load the docs and build the index:
 ```sql
 -- CLI: PUT 'file://.../docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
 -- Workspace: COPY FILES INTO @COMPANY_DOCS FROM '@CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';

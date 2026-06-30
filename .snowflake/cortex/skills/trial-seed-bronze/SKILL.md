@@ -4,6 +4,7 @@ description: Stand up the Employee 360 medallion on a trial account with NO exte
 tools:
 - read_file
 - run_shell_command
+- ask_user_question
 ---
 
 # When to Use
@@ -17,8 +18,9 @@ tools:
 This is the offline twin of the live ingest: `seed_bronze.sh` is the no-tunnel replacement for steps ①②-Bronze
 (`api-schema-extraction` + `medallion-build`'s Bronze ingest). Everything **downstream is identical** — the
 committed `src/03_silver.sql` → `04_gold.sql` → `05_semantic_analyst.sql` → `01_document_ingestion.sql` run
-unchanged. There are **no generate-then-review hooks** on this path — it runs the committed reference SQL
-as-is, so attendees converge on exactly the presenter's schema.
+unchanged. By default there are **no generate-then-review hooks** on this path — it runs the committed
+reference SQL as-is, so attendees converge on exactly the presenter's schema. (Optional: you can still drive
+`medallion-build`'s Silver + Gold review hooks against the seeded Bronze — see step 3.)
 
 # Prerequisites
 
@@ -62,6 +64,14 @@ snow sql -c 7ptrial --role ACCOUNTADMIN -f ../01_document_ingestion.sql    # COM
 ```
 (`seed_bronze.sh` prints these next-step commands too.) Then hand off to **`dashboard-compose`** (step ④) to
 deploy the app and load `docs/*.md`.
+
+**Optional — build Silver + Gold with CoCo's review hooks instead of running `03`/`04` as-is.** Bronze is
+already seeded, so the only EAI-bound step (Bronze ingest) is done. Hand the seeded Bronze to
+**`medallion-build`** and generate **Silver then Gold** with its per-layer review hook (an `ask_user_question`
+selection popup — **Run it** · **Revise** · **Show full SQL** · **Skip**, plus the auto free-form; skip its Bronze/EAI
+layer; derive the map offline from the Bronze VARIANT or `schema_spec.json`). Keep the curated Gold rollups +
+`05`/`01` pinned to the committed reference so the dashboard's hardcoded names still resolve. See
+`medallion-build` → **Trial / offline mode**.
 
 ## 4. Verify
 

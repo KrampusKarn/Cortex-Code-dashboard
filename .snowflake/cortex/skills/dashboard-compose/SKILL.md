@@ -4,6 +4,7 @@ description: Deploy the Employee 360 Streamlit dashboard (the committed deployed
 tools:
 - read_file
 - run_shell_command
+- ask_user_question
 ---
 
 # When to Use
@@ -29,6 +30,11 @@ templated render step.
    see `app/environment.yml`; nothing to install.
 
 # Workflows
+
+**Pick the deploy method via the `ask_user_question` selection popup** (header `Deploy method`) before
+deploying — present the two options below; the tool auto-appends a **"Something else"** free-form entry for
+anything custom. On a fresh trial account prefer **Option A**; on the existing DEMO account prefer **Option B**
+(`--replace` preserves the live URL). If the selection tool is unavailable, ask as a plain-text choice.
 
 ## Option A — Workspace / Cortex Code-native (no CLI): `src/deploy_app.sql`
 
