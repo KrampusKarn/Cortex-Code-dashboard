@@ -16,6 +16,14 @@ The dashboard reads **`GOLD`**, which is built from **`SILVER`**. Steps 1–2 an
 > skills) *generates* the equivalent SQL into `build/`, you review each layer, then CoCo runs it. The table
 > below is the canonical shape that generated SQL converges on, and exactly what the **7ptrial** path runs.
 
+> **7ptrial can also use the review popups (the "reviewed build").** The table below is the *run-as-is* default
+> (execute `src/03→01.sql` directly). But after seeding Bronze you can instead drive `medallion-build` (its
+> Bronze-pre-seeded mode) + `cortex-analyst-search` so each layer is generated into `build/`, shown in an
+> `ask_user_question` popup (Run it · Revise · Show full SQL · Skip), and run on approval — the same per-layer
+> review the DEMO path gets. A fresh clone already has the popup-ready skills committed. **Each layer still runs
+> once** — the popup is a pause to review the generated SQL, not a second execution; you run `build/*.sql`, not
+> `build/` *and* `src/`.
+
 | Order | File | Creates |
 |---|---|---|
 | 1 | `00_setup.sql` | The PUBLIC **app/RAG layer only**: warehouses, database, schema, the `COMPANY_DOCS` stage, and the 4 chat/document tables. (Entity DDL lives in SILVER — step 2.) |

@@ -37,6 +37,12 @@ Access Integration, so they can't pull the API — that is the only reason the t
    then the committed `src/03_silver.sql` → `04_gold.sql` → `05_semantic_analyst.sql` →
    `01_document_ingestion.sql` as-is (no generation, no EAI), then `dashboard-compose`.
 
+> **7ptrial reviewed-build option.** The as-is run above is the default, but 7ptrial can ALSO get the DEMO's
+> per-layer review popups: after seeding Bronze, drive `medallion-build` (Bronze-pre-seeded mode) +
+> `cortex-analyst-search` so each layer is generated into `build/` and approved via the `ask_user_question`
+> popup before running. If the user wants both paths to feel the same, offer this. Each layer still runs once
+> (the popup is a review pause, not a re-run); run `build/*.sql`, never `build/` *and* `src/`.
+
 ## The review hook — the heart of the DEMO
 
 Skills ② and ③ **generate SQL into `build/` first, then STOP and wait for the presenter's go-ahead before

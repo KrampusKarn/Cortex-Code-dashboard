@@ -65,7 +65,9 @@ table). In short:
   start`) → drive Cortex Code through skills ①→④, approving each medallion layer.
 - **7ptrial (attendee):** `src/00_setup.sql` + `src/03_silver.sql` → `src/seeders/seed_bronze.sh --connection
   7ptrial` → `CALL SP_BUILD_SILVER()` → `src/04_gold.sql` → `05_semantic_analyst.sql` →
-  `01_document_ingestion.sql` → deploy the app.
+  `01_document_ingestion.sql` → deploy the app. This is the *run-as-is* default; you can instead drive the
+  skills so each layer is generated into `build/` and approved through the **review popups** (same as DEMO) —
+  see WORKSHOP.md "Variant B". A fresh clone already has the popup-ready skills committed.
 
 See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for the facilitated run-of-show.
 
