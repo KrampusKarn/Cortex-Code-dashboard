@@ -120,7 +120,16 @@ the live-API path — just fed from files. Pass `--connection <your-connection>`
   object + `CREATE STREAMLIT` from the repo's `app/` folder, no CLI). On the **existing DEMO
   account**, redeploy in place from `app/`: `snow streamlit deploy --replace -c <connection>`
   (it reads `snowflake.yml` and updates the live object, preserving its URL).
-- **Documents** — upload `docs/*.md` and rebuild the chunks:
+- **Documents** — load `docs/*.md` and rebuild the chunks. **Preferred (server-side, from the git stage —
+  no local transfer, no OAuth prompt):**
+  ```sql
+  COPY FILES INTO @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS
+    FROM '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';
+  ALTER STAGE DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS REFRESH;
+  CALL DEMO_EMPLOYEE_APP.PUBLIC.SP_REBUILD_DOC_CHUNKS();
+  ```
+  **Fallback (local CLI upload)** — note `snow sql PUT` can hang on a browser OAuth flow even with a
+  key-pair connection, so prefer `COPY FILES` above:
   ```bash
   snow sql -c <connection> --role ACCOUNTADMIN -q \
     "PUT 'file://docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"

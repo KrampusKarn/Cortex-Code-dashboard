@@ -80,8 +80,12 @@ Generate `build/document_search.sql` (in `PUBLIC`, on warehouse `DEMO_WH`):
 
 **Review hook (present the `ask_user_question` popup, then wait).** On **Run it**, run `build/document_search.sql`, then load the docs and build the index:
 ```sql
--- CLI: PUT 'file://.../docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
--- Workspace: COPY FILES INTO @COMPANY_DOCS FROM '@CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';
+-- PREFERRED (server-side, no local file transfer; also works when there's no `snow` CLI):
+--   create the git repo once (see dashboard-compose / src/deploy_app.sql), then:
+COPY FILES INTO @COMPANY_DOCS FROM '@CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';
+-- FALLBACK (local CLI upload) — note: `snow sql PUT` may trigger a browser OAuth flow that hangs even on a
+-- key-pair connection, so prefer COPY FILES above:
+--   PUT 'file://.../docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;
 ALTER STAGE COMPANY_DOCS REFRESH;
 CALL SP_REBUILD_DOC_CHUNKS();
 SELECT COUNT(*) FROM DOCUMENT_CHUNKS;          -- > 0 once parsed

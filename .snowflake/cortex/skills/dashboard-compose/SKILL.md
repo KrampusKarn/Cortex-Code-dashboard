@@ -66,13 +66,23 @@ All artifacts in `snowflake.yml` (`streamlit_app.py`, `environment.yml`) are sta
 
 ## Load the RAG documents (if not already loaded by step ③)
 
+**Preferred — server-side `COPY FILES` from the git stage (no local file transfer, no CLI auth).** The git repo
+`CORTEX_REPO` is created by `src/deploy_app.sql` / Option A; then run this on the active connection:
+```sql
+COPY FILES INTO @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS
+  FROM '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';
+ALTER STAGE DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS REFRESH;
+CALL DEMO_EMPLOYEE_APP.PUBLIC.SP_REBUILD_DOC_CHUNKS();
+```
+
+**Fallback — local CLI upload.** Only if you're not using the git repo. Note: `snow sql PUT` can trigger a
+browser **OAuth** flow that hangs/times out even on a key-pair connection — prefer `COPY FILES` above.
 ```bash
-snow sql -c <conn> --role ACCOUNTADMIN -q \
+snow sql -c <your-connection> --role ACCOUNTADMIN -q \
   "PUT 'file://examples/hris_people/deployed_app/docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
-snow sql -c <conn> --role ACCOUNTADMIN -q \
+snow sql -c <your-connection> --role ACCOUNTADMIN -q \
   "ALTER STAGE DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS REFRESH; CALL DEMO_EMPLOYEE_APP.PUBLIC.SP_REBUILD_DOC_CHUNKS();"
 ```
-(In a Workspace, `COPY FILES` the docs from the git stage instead — see the footer of `src/deploy_app.sql`.)
 
 ## Verify
 

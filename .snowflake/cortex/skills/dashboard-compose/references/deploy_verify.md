@@ -14,9 +14,12 @@ stage (footer of `deploy_app.sql`), `ALTER STAGE COMPANY_DOCS REFRESH`, `CALL SP
 ```bash
 cd examples/hris_people/deployed_app/app
 snow streamlit deploy --replace --connection <your-connection>
-# load docs:
+# load docs — PREFERRED: server-side COPY FILES from the git stage (no local transfer, no OAuth prompt):
 snow sql -c <conn> --role ACCOUNTADMIN -q \
-  "PUT 'file://../docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
+  "COPY FILES INTO @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS FROM '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';"
+# FALLBACK (local upload) — `snow sql PUT` may hang on a browser OAuth flow even with key-pair auth; prefer COPY FILES:
+#   snow sql -c <conn> --role ACCOUNTADMIN -q \
+#     "PUT 'file://../docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
 snow sql -c <conn> --role ACCOUNTADMIN -q \
   "ALTER STAGE DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS REFRESH; CALL DEMO_EMPLOYEE_APP.PUBLIC.SP_REBUILD_DOC_CHUNKS();"
 ```
@@ -43,3 +46,4 @@ Then open the app: tabs render, **Ask Your Data** answers "headcount by departme
 | App won't load / slow first load | compute pool suspended | first load after 5-min suspend takes ~30–60s; `SHOW COMPUTE POOLS;` |
 | Two apps appear | `deploy_app.sql` ran on an account that already had the live app | drop the old auto-named Streamlit, keep `DASHBOARD_SPS` |
 | Redeploy didn't update | deployed without `--replace` | re-run `snow streamlit deploy --replace` (or re-`FETCH` + `CREATE OR REPLACE STREAMLIT`) |
+| Doc load hangs / "OAuth message timeout" | `snow sql PUT` negotiated a browser OAuth flow (even with a key-pair connection) | use the server-side `COPY FILES` from the git stage instead of `PUT` (preferred path above) |

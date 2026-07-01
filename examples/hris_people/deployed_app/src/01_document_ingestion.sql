@@ -119,9 +119,14 @@ CREATE OR REPLACE CORTEX SEARCH SERVICE COMPANY_KB_SEARCH
        FROM DEMO_EMPLOYEE_APP.PUBLIC.DOCUMENT_CHUNKS;
 
 -- ---------------------------------------------------------------------
--- BOOTSTRAP (run after 00_setup.sql, then upload documents to the stage):
---   snow sql -c <conn> --role ACCOUNTADMIN -q \
---     "PUT 'file://path/to/docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
+-- BOOTSTRAP (run after 00_setup.sql, then load documents into the stage):
+--   PREFERRED — server-side COPY FILES from the git stage (no local transfer, no OAuth prompt):
+--     COPY FILES INTO @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS
+--       FROM '@DEMO_EMPLOYEE_APP.PUBLIC.CORTEX_REPO/branches/main/examples/hris_people/deployed_app/docs/';
+--   FALLBACK — local CLI upload (note: `snow sql PUT` can hang on a browser OAuth flow even with a
+--   key-pair connection, so prefer COPY FILES above):
+--     snow sql -c <conn> --role ACCOUNTADMIN -q \
+--       "PUT 'file://path/to/docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"
 -- then:
 --   ALTER STAGE COMPANY_DOCS REFRESH;
 --   CALL SP_REBUILD_DOC_CHUNKS();
