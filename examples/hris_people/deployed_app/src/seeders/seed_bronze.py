@@ -5,7 +5,7 @@ Builds the same OmniHR + Harvest graph the mock API serves, serializes each reco
 with the SAME `endpoints.py` serializers, and emits a SQL file that loads the raw
 JSON into `BRONZE.<entity>` VARIANT tables — byte-for-byte the shape the live API
 ingest produces. Then `CALL SILVER.SP_BUILD_SILVER()` flattens it exactly as in the
-live DEMO path. This is the 7ptrial path: a trial account (which can't use an External
+live-API path. This is the offline seeder path: a trial account (which can't use an External
 Access Integration) demos the FULL Bronze -> Silver -> Gold flow, fed from local JSON
 instead of the HTTP tunnel.
 

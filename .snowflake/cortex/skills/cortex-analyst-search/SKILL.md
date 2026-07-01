@@ -10,7 +10,7 @@ tools:
 
 # When to Use
 
-- Step ③ of the **DEMO path** (connection `sevenpeaks_partner_demo`): the GOLD layer is built (from
+- Step ③ of the **live-API path**: the GOLD layer is built (from
   `medallion-build`) and the presenter wants the **two Cortex assistants** the dashboard ships:
   **Ask Your Data** (Cortex Analyst over a semantic view) and **Documents** (Cortex Search RAG over company
   docs).
@@ -18,7 +18,7 @@ tools:
   COMPANY_KB_SEARCH, talk to your data.
 
 Generate into `build/`, run only after the review hook. Golden references: `src/05_semantic_analyst.sql`
-(Analyst) and `src/01_document_ingestion.sql` (Search). The **7ptrial** path runs those two committed files
+(Analyst) and `src/01_document_ingestion.sql` (Search). The **offline seeder** path runs those two committed files
 as-is via `trial-seed-bronze`; this skill is the DEMO path's generate-then-review version.
 
 # The review hook
@@ -97,7 +97,7 @@ Cortex Search builds embeddings asynchronously — give it a minute before the D
 - **Search indexes `DOCUMENT_CHUNKS`** (parsed from `docs/*.md`) — not a hand-curated table.
 - **Wait for indexing** before judging RAG quality; "No relevant information found" usually means the index
   is still building or `DOCUMENT_CHUNKS` is empty.
-- **Generate into `build/`; never overwrite `src/01` or `src/05`** (golden reference + 7ptrial path).
+- **Generate into `build/`; never overwrite `src/01` or `src/05`** (golden reference + offline seeder path).
 
 # Examples
 

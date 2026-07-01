@@ -25,10 +25,10 @@ takes to build a medallion with Cortex Code.
 
 ## Two paths
 
-| Path | Connection | Who | Bronze comes from |
+| Path | Account | Who | Bronze comes from |
 |---|---|---|---|
-| **DEMO** | `sevenpeaks_partner_demo` | the presenter | the live mock API + External Access (skill-driven, reviewed) |
-| **7ptrial** | `7ptrial` | attendees on trial accounts (no EAI) | the offline seeder loads the same JSON, then the committed reference SQL runs as-is |
+| **Live-API** | account with External Access + the live mock API/tunnel | the presenter | the live mock API + External Access (skill-driven, reviewed) |
+| **Offline seeder** | trial account (no EAI) | attendees | the offline seeder loads the same JSON, then the committed reference SQL runs as-is |
 
 Both converge on the **same** GOLD layer and dashboard. Trial accounts can't create an External Access
 Integration, which is the only reason the offline path exists.
@@ -41,7 +41,7 @@ Integration, which is the only reason the offline path exists.
 | [`medallion-build`](.snowflake/cortex/skills/medallion-build) | DEMO ② | generate Bronze/Silver/Gold SQL with a per-layer review hook |
 | [`cortex-analyst-search`](.snowflake/cortex/skills/cortex-analyst-search) | DEMO ③ | semantic view (Analyst) + document Search (RAG) |
 | [`dashboard-compose`](.snowflake/cortex/skills/dashboard-compose) | both ④ | deploy + verify the Streamlit app |
-| [`trial-seed-bronze`](.snowflake/cortex/skills/trial-seed-bronze) | 7ptrial | offline Bronze load → the committed reference SQL |
+| [`trial-seed-bronze`](.snowflake/cortex/skills/trial-seed-bronze) | offline seeder | offline Bronze load → the committed reference SQL |
 
 ## Prerequisites
 
@@ -50,9 +50,9 @@ Integration, which is the only reason the offline path exists.
   GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE ACCOUNTADMIN;
   -- if models are region-limited:  ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';
   ```
-- For the **DEMO** path only: the **`snow` CLI** + a `sevenpeaks_partner_demo` connection in
+- For the **Live-API** path only: the **`snow` CLI** + your own connection in
   `~/.snowflake/connections.toml`, plus a tunnel for the mock API (`mock_api/serve_eai.sh`, ngrok/cloudflare).
-- For the **7ptrial** path: a `7ptrial` connection and **Python 3.9+** with `pip install -r requirements.txt`
+- For the **Offline seeder** path: your own connection and **Python 3.9+** with `pip install -r requirements.txt`
   (Faker only — the apps run inside Snowflake, not locally).
 
 ## Run it
@@ -61,12 +61,12 @@ The ordered runbook is **[`examples/hris_people/deployed_app/README.md`](example
 (both paths) and **[`src/README.md`](examples/hris_people/deployed_app/src/README.md)** (the per-file run
 table). In short:
 
-- **DEMO (presenter):** `src/reset_for_coco.sql` → `src/00_setup.sql` → start the API (`mock_api/serve_eai.sh
+- **Live-API (presenter):** `src/reset_for_coco.sql` → `src/00_setup.sql` → start the API (`mock_api/serve_eai.sh
   start`) → drive Cortex Code through skills ①→④, approving each medallion layer.
-- **7ptrial (attendee):** `src/00_setup.sql` + `src/03_silver.sql` → `src/seeders/seed_bronze.sh --connection
-  7ptrial` → `CALL SP_BUILD_SILVER()` → `src/04_gold.sql` → `05_semantic_analyst.sql` →
+- **Offline seeder (attendee):** `src/00_setup.sql` + `src/03_silver.sql` → `src/seeders/seed_bronze.sh --connection
+  <your-connection>` → `CALL SP_BUILD_SILVER()` → `src/04_gold.sql` → `05_semantic_analyst.sql` →
   `01_document_ingestion.sql` → deploy the app. This is the *run-as-is* default; you can instead drive the
-  skills so each layer is generated into `build/` and approved through the **review popups** (same as DEMO) —
+  skills so each layer is generated into `build/` and approved through the **review popups** (same as the live path) —
   see WORKSHOP.md "Variant B". A fresh clone already has the popup-ready skills committed.
 
 See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for the facilitated run-of-show.
@@ -74,7 +74,7 @@ See [`docs/WORKSHOP.md`](docs/WORKSHOP.md) for the facilitated run-of-show.
 ## What's tracked vs generated
 
 - **Committed:** the app (`deployed_app/app/`), the setup + medallion SQL (`deployed_app/src/*.sql` — the
-  golden reference *and* the 7ptrial runtime), the mock API, the RAG docs, and `schema_spec.json` (lineage
+  golden reference *and* the offline seeder runtime), the mock API, the RAG docs, and `schema_spec.json` (lineage
   reference only).
 - **Git-ignored / regenerated:** the DEMO path's generated SQL under `deployed_app/build/`. CoCo authors it
   live for review; it never overwrites `src/`.

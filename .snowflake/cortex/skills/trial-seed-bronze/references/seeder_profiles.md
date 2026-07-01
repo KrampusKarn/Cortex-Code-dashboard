@@ -1,4 +1,4 @@
-# Seeder profiles — the 7ptrial data brain
+# Seeder profiles — the offline seeder data brain
 
 The offline Bronze load is driven by two maintained artifacts next to the seeder:
 `profiles_omnihr.json` (HR / org / recruitment / leave) and `profiles_harvest.json` (projects / time /
@@ -42,8 +42,8 @@ don't declare them in the profiles.
 ## Tuning the demo data
 
 Edit the profiles, never the Bronze tables. Change a `rows` count or a value rule, then re-run
-`./seed_bronze.sh --connection 7ptrial` and `CALL SILVER.SP_BUILD_SILVER();`. Keep `SEED=42` so the trial
-account matches the DEMO account.
+`./seed_bronze.sh --connection <your-connection>` and `CALL SILVER.SP_BUILD_SILVER();`. Keep `SEED=42` so the trial
+account matches the live-API account.
 
 ## Self-test (determinism + flatten parity)
 

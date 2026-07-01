@@ -35,9 +35,9 @@ entity data.
 `BRONZE` is filled two ways — both then run the **same** `SP_BUILD_SILVER` → Gold, so the dashboard
 is identical either way:
 
-- **Live API ingest (DEMO, connection `sevenpeaks_partner_demo`):** `mock_api/` serves OmniHR + Harvest JSON
+- **Live API ingest (live-API path):** `mock_api/` serves OmniHR + Harvest JSON
   over an HTTPS tunnel; `SP_INGEST_ALL_BRONZE` pulls it into Bronze. Skill-driven — see the DEMO path below.
-- **Offline seeder (7ptrial, connection `7ptrial`):** `src/seeders/seed_bronze.sh` generates the same JSON and
+- **Offline seeder (trial account, no EAI):** `src/seeders/seed_bronze.sh` generates the same JSON and
   loads it straight into Bronze — no API or external-access integration needed.
 
 ## Knowledge base — the Documents assistant
@@ -75,11 +75,11 @@ The app and both assistants deploy straight from the public repo
 aren't available in your region, run `ALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';`.
 Run all SQL as `ACCOUNTADMIN`; every script is idempotent.
 
-### DEMO path — live mock API, skill-driven (presenter · connection `sevenpeaks_partner_demo`)
+### Live-API path — live mock API, skill-driven (presenter)
 
 The showcase: Cortex Code **extracts the live API and generates the medallion**, pausing for your review at
 each layer. You don't run `02→05.sql` by hand — those stay as the golden reference CoCo converges on (and the
-7ptrial runtime). Pass `--connection sevenpeaks_partner_demo` on every `snow` command.
+offline seeder runtime). Pass `--connection <your-connection>` on every `snow` command (or set it as your default).
 
 0. **Clean slate:** `src/reset_for_coco.sql` — drops only `BRONZE`/`SILVER`/`GOLD` (keeps the app, chat
    tables, Cortex Search, docs).
@@ -97,19 +97,19 @@ each layer. You don't run `02→05.sql` by hand — those stay as the golden ref
 > The committed `src/02→05.sql` are the **golden reference** these skills converge on — read them to
 > sanity-check what CoCo generates; don't run them by hand on this path.
 
-### 7ptrial path — trial account, offline Bronze load, no EAI (attendees · connection `7ptrial`)
+### Offline seeder path — trial account, offline Bronze load, no EAI (attendees)
 
 Trial accounts can't use an External Access Integration, so instead of pulling the mock API over a tunnel,
 load the **same JSON locally** into Bronze and run the committed reference SQL. Same Bronze → Silver → Gold as
-the DEMO path — just fed from files. Pass `--connection 7ptrial` on every command.
+the live-API path — just fed from files. Pass `--connection <your-connection>` on every command.
 
 1. `src/00_setup.sql` — database, warehouses, PUBLIC app/RAG tables.
 2. `src/03_silver.sql` — Silver schema + typed tables + `SP_BUILD_SILVER` (the flatten proc).
 3. Load Bronze (the offline twin of `SP_INGEST_ALL_BRONZE`), then flatten to Silver:
    ```bash
-   cd src/seeders && ./seed_bronze.sh --connection 7ptrial
+   cd src/seeders && ./seed_bronze.sh --connection <your-connection>
    # then (the loader prints these):
-   snow sql -c 7ptrial --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
+   snow sql -c <your-connection> --role ACCOUNTADMIN -q "CALL DEMO_EMPLOYEE_APP.SILVER.SP_BUILD_SILVER();"
    ```
 4. `src/04_gold.sql` → `src/05_semantic_analyst.sql` → `src/01_document_ingestion.sql`.
 5. Load the documents + deploy the app (below).

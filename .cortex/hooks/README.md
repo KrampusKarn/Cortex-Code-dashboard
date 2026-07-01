@@ -22,8 +22,8 @@ fires after every SQL call, so you get per-layer verification automatically (Bro
 
 ## Setup
 
-1. The connection defaults to `sevenpeaks_partner_demo` (the DEMO path). Override with
-   `export CORTEX_DEMO_CONN=<your-conn>` if different.
+1. The connection defaults to your **snow default connection** (`default_connection_name` in
+   `connections.toml`). Override with `export CORTEX_DEMO_CONN=<your-conn>` to target a specific one.
 2. The scripts shell out to the `snow` CLI (read-only `SELECT`s) — it must be on PATH and authenticated.
 3. Either commit `.cortex/settings.json` (it auto-loads) **or** paste the equivalents into Cortex Code
    Desktop → Settings → Hooks. The Desktop per-entry form is:

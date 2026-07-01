@@ -3,7 +3,7 @@
 Generate each `build/<layer>.sql` from these, filling the registry / tables / field-map from
 `build/extraction_map.json`. They mirror the golden `src/02_bronze.sql`, `src/03_silver.sql`,
 `src/04_gold.sql` so the authored SQL converges on the known-good, dashboard-compatible shape. All run as
-`ACCOUNTADMIN` on `sevenpeaks_partner_demo`. Header every file `USE DATABASE DEMO_EMPLOYEE_APP;`.
+`ACCOUNTADMIN` on the user's active connection. Header every file `USE DATABASE DEMO_EMPLOYEE_APP;`.
 
 ## build/bronze.sql
 

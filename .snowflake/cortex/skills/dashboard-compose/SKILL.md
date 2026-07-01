@@ -1,6 +1,6 @@
 ---
 name: dashboard-compose
-description: Deploy the Employee 360 Streamlit dashboard (the committed deployed_app/app/ monolith) as the final step of the demo, once GOLD and both Cortex assistants exist. The app reads the GOLD medallion layer for its 14 tabs and wires the two assistants — Documents (Cortex Search over DOCUMENT_CHUNKS) and Ask Your Data (Cortex Analyst over GOLD.HR_ANALYST). Deploys with snow streamlit deploy (CLI) or src/deploy_app.sql (Workspace / Cortex Code-native, from the git stage), then verifies the dashboard and both assistants answer. This is step ④ — the same for the DEMO and 7ptrial paths.
+description: Deploy the Employee 360 Streamlit dashboard (the committed deployed_app/app/ monolith) as the final step of the demo, once GOLD and both Cortex assistants exist. The app reads the GOLD medallion layer for its 14 tabs and wires the two assistants — Documents (Cortex Search over DOCUMENT_CHUNKS) and Ask Your Data (Cortex Analyst over GOLD.HR_ANALYST). Deploys with snow streamlit deploy (CLI) or src/deploy_app.sql (Workspace / Cortex Code-native, from the git stage), then verifies the dashboard and both assistants answer. This is step ④ — the same for the live-API and offline seeder paths.
 tools:
 - read_file
 - run_shell_command
@@ -11,7 +11,7 @@ tools:
 
 - Final step ④ on **either** path: the GOLD layer is built and the two assistants exist
   (`GOLD.HR_ANALYST` + `COMPANY_KB_SEARCH`), and the presenter wants the dashboard live.
-- DEMO path connection `sevenpeaks_partner_demo`; 7ptrial path connection `7ptrial`.
+- Runs on the user's active connection; for CLI steps use their default connection (`<your-connection>`).
 - Keywords: deploy, Streamlit, dashboard, ship it, Employee 360, DASHBOARD_SPS, go live, publish the app.
 
 This skill deploys the **already-committed** `examples/hris_people/deployed_app/app/streamlit_app.py` (a
@@ -60,7 +60,7 @@ want a single named app.)
 From the app folder (it has `snowflake.yml`, which targets the existing app object so the URL is preserved):
 ```bash
 cd examples/hris_people/deployed_app/app
-snow streamlit deploy --replace --connection sevenpeaks_partner_demo   # or 7ptrial
+snow streamlit deploy --replace --connection <your-connection>
 ```
 All artifacts in `snowflake.yml` (`streamlit_app.py`, `environment.yml`) are staged together.
 
@@ -99,7 +99,7 @@ See `references/deploy_verify.md` for the ordered commands and the common failur
 ## Example 1: Finish the demo (DEMO path)
 
 After Gold + both assistants, CoCo runs `src/deploy_app.sql` (Workspace) or
-`snow streamlit deploy --replace -c sevenpeaks_partner_demo` (CLI), loads `docs/*.md`, opens the app, asks
+`snow streamlit deploy --replace -c <your-connection>` (CLI), loads `docs/*.md`, opens the app, asks
 "headcount by department" (Analyst) and "PTO policy" (Search), and confirms both answer.
 
 ## Example 2: Assistant tab empty

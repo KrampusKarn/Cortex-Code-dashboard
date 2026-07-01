@@ -10,18 +10,19 @@ tools:
 
 # When to Use
 
-- Step ② of the **DEMO path** (connection `sevenpeaks_partner_demo`): `build/extraction_map.json` exists
-  (from `api-schema-extraction`) and the presenter wants CoCo to **build the medallion**, reviewing each
-  layer before it runs.
+- Step ② of the **live-API path**: `build/extraction_map.json` exists (from `api-schema-extraction`) and the
+  user wants CoCo to **build the medallion**, reviewing each layer before it runs. Runs on the user's active
+  connection.
 - The whole point is to **showcase how easily Cortex Code stands up a medallion** — generate the SQL, let a
   human eyeball Bronze, then Silver, then Gold, tweak anything, and only then implement.
 - Keywords: medallion, Bronze, Silver, Gold, flatten, build the warehouse, ELT, generate the SQL, review.
 
 This skill generates SQL into `build/` and runs it **only after you approve each layer**. The Cortex Analyst
 semantic view + the document Search are step ③ (`cortex-analyst-search`); deploying the app is step ④
-(`dashboard-compose`). The **7ptrial** path normally skips this skill — `trial-seed-bronze` loads Bronze from
-the seeder and runs the committed `src/03→04.sql` as-is. But you **can** drive the Silver + Gold review hooks
-on a trial account too (Bronze pre-seeded by the seeder, no EAI needed) — see **Trial / offline mode** below.
+(`dashboard-compose`). The **offline seeder path** normally skips this skill's Bronze layer — `trial-seed-bronze`
+loads Bronze from the seeder and runs the committed `src/03→04.sql` as-is. But you **can** drive the Silver +
+Gold review hooks on a trial account too (Bronze pre-seeded by the seeder, no EAI needed; get the map via
+`api-schema-extraction` offline mode) — see **Trial / offline mode** below.
 
 # The review hook (apply to EVERY layer — Bronze, Silver, AND Gold)
 
@@ -119,18 +120,19 @@ Generate `build/gold.sql`:
 
 # Trial / offline mode (Bronze pre-seeded, no EAI)
 
-On the **7ptrial** connection you can still get the per-layer review demo for **Silver and Gold** — only the
-Bronze *ingest* needs an EAI, and `trial-seed-bronze` already lands Bronze offline. So:
+On a **trial/offline connection** you can still get the per-layer review demo for **Silver and Gold** — only
+the Bronze *ingest* needs an EAI, and `trial-seed-bronze` already lands Bronze offline. So:
 
 1. **Skip Layer 1 (Bronze).** Don't generate the EAI / network-rule / ingest SQL — the seeder loaded
    `BRONZE.<entity>` already. Confirm with `SELECT PAYLOAD FROM BRONZE.EMPLOYEES LIMIT 1`.
-2. **Get the map offline** (no `api-schema-extraction`, no tunnel): derive it from the seeded Bronze VARIANT
-   (`SELECT PAYLOAD FROM BRONZE.<t> LIMIT 1` — the nested paths are right there), or read
+2. **Get the map offline via `api-schema-extraction` (offline mode).** Its dedicated extraction subagent
+   derives `build/extraction_map.json` from the seeded Bronze VARIANT (`SELECT PAYLOAD FROM BRONZE.<t> LIMIT 1`
+   — the nested paths are right there) cross-checked with `src/02`/`src/03`, or from
    `examples/hris_people/schema_spec.json` (`api_field` = the `json_path`, dotted for nested like
-   `department.name`).
+   `department.name`). No tunnel needed — same map the live path produces.
 3. **Generate Layer 2 (Silver) then Layer 3 (Gold) with the same review hooks** — `build/silver.sql`, then
-   `build/gold.sql` — running each against `7ptrial` (as `ACCOUNTADMIN`) after approval. Silver's flatten is
-   data-driven, so it runs identically over the seeded Bronze.
+   `build/gold.sql` — running each against your connection (as `ACCOUNTADMIN`) after approval. Silver's
+   flatten is data-driven, so it runs identically over the seeded Bronze.
 4. **Two kinds of Gold — handle them differently.** The **24 entity pass-throughs**
    (`GOLD.<entity> AS SELECT * FROM SILVER.<entity>`) are pure *shape* — safe to derive fresh from the seeded
    data. The **6 curated views** (`EMPLOYEE_360`, `HEADCOUNT_BY_DEPARTMENT`, `RECRUITMENT_FUNNEL`,
@@ -146,13 +148,13 @@ Everything else (the `ask_user_question` review popup, idempotent SQL, matching 
 
 - **One layer, one hook.** Never generate-and-run all three silently — the review gates are the demo.
 - **Generate into `build/`, never overwrite `src/`.** The committed `src/02→05.sql` are the golden reference
-  and the 7ptrial path; clobbering them breaks attendees.
+  and the offline seeder path; clobbering them breaks attendees.
 - **Converge on the reference shapes.** Names like `GOLD.EMPLOYEE_360`, `GOLD.HEADCOUNT_BY_DEPARTMENT`,
   `SP_BUILD_SILVER` are queried by the committed app — keep them identical so the dashboard lights up.
 - **The field-map is only the nested columns.** Don't list flat columns in `SILVER_FIELD_MAP`; the flatten
   defaults to `lower(column)`.
 - **Idempotent SQL** (`IF NOT EXISTS` / `CREATE OR REPLACE`) so re-running a revised layer never drops data.
-- **Run as `ACCOUNTADMIN`** (External Access + owner's rights), on `sevenpeaks_partner_demo`.
+- **Run as `ACCOUNTADMIN`** (External Access + owner's rights), on the user's active connection.
 
 # Examples
 

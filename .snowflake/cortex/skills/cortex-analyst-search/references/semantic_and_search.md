@@ -2,7 +2,7 @@
 
 Generate `build/semantic.sql` and `build/document_search.sql` from these. They mirror the golden
 `src/05_semantic_analyst.sql` and `src/01_document_ingestion.sql` so the authored SQL stays compatible with
-the committed `app/streamlit_app.py`. Run as `ACCOUNTADMIN` on `sevenpeaks_partner_demo`. Grant first:
+the committed `app/streamlit_app.py`. Run as `ACCOUNTADMIN` on the user's active connection. Grant first:
 `GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE ACCOUNTADMIN;`.
 
 ## build/semantic.sql — Cortex Analyst

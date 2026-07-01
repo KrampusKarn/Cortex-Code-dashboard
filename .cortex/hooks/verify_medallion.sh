@@ -11,7 +11,9 @@
 #   stdout : {"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"<msg>"}}
 set -uo pipefail
 
-CONN="${CORTEX_DEMO_CONN:-sevenpeaks_partner_demo}"   # DEMO path connection; override via env if needed
+# Connection: use $CORTEX_DEMO_CONN if set, else fall back to the snow default connection
+# (default_connection_name in connections.toml) — never a hardcoded account.
+if [ -n "${CORTEX_DEMO_CONN:-}" ]; then CONN_ARGS=(-c "$CORTEX_DEMO_CONN"); else CONN_ARGS=(); fi
 DB="DEMO_EMPLOYEE_APP"
 
 payload="$(cat)"
@@ -42,7 +44,7 @@ else exit 0   # not a medallion step — stay silent
 fi
 
 # Run one read-only check; return the first scalar (or "" on any error).
-q() { snow sql -c "$CONN" --role ACCOUNTADMIN --format json -q "$1" 2>/dev/null \
+q() { snow sql "${CONN_ARGS[@]}" --role ACCOUNTADMIN --format json -q "$1" 2>/dev/null \
         | python3 -c 'import json,sys
 try:
     d=json.load(sys.stdin); print(d[0][list(d[0])[0]] if d else "")

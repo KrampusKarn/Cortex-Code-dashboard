@@ -13,7 +13,7 @@ stage (footer of `deploy_app.sql`), `ALTER STAGE COMPANY_DOCS REFRESH`, `CALL SP
 **CLI** —
 ```bash
 cd examples/hris_people/deployed_app/app
-snow streamlit deploy --replace --connection <sevenpeaks_partner_demo | 7ptrial>
+snow streamlit deploy --replace --connection <your-connection>
 # load docs:
 snow sql -c <conn> --role ACCOUNTADMIN -q \
   "PUT 'file://../docs/*.md' @DEMO_EMPLOYEE_APP.PUBLIC.COMPANY_DOCS AUTO_COMPRESS=FALSE OVERWRITE=TRUE;"

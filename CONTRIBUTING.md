@@ -11,8 +11,8 @@ API / seeder.
   read by the `snow` CLI. Connection files, `*.p8` keys, and `.env` files are git-ignored — keep it that way.
 - **Synthetic data only.** All demo data is generated from `src/seeders/profiles_*.json`. Never commit real
   customer, employee, or client data.
-- **Never overwrite `src/*.sql` from the DEMO path.** The committed `src/02→05.sql` are the golden reference
-  *and* the 7ptrial runtime. CoCo's live build writes to the git-ignored `deployed_app/build/` instead.
+- **Never overwrite `src/*.sql` from the live-API path.** The committed `src/02→05.sql` are the golden reference
+  *and* the offline seeder runtime. CoCo's live build writes to the git-ignored `deployed_app/build/` instead.
 
 ## Local setup
 
